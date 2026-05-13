@@ -1810,7 +1810,10 @@ async function runAnalysis(){
   try{
     const res=await fetch('https://api.anthropic.com/v1/messages',{
       method:'POST',
-      headers:{'Content-Type':'application/json'},
+      headers:{
+        'Content-Type':'application/json',
+        'anthropic-dangerous-direct-browser-access':'true'
+      },
       body:JSON.stringify({
         model:'claude-sonnet-4-20250514',
         max_tokens:2500,
@@ -1942,11 +1945,23 @@ Return ONLY valid JSON, no markdown, no fences:
       )
     });
     clearInterval(st);
-    if(!res.ok) throw new Error('API '+res.status);
+    if(!res.ok){
+      let errMsg='API '+res.status;
+      try{const errData=await res.json();errMsg=errData?.error?.message||errMsg;}catch(_){}
+      throw new Error(errMsg);
+    }
     const data=await res.json();
     const raw=data.content.find(b=>b.type==='text')?.text||'';
-    const clean=raw.replace(/`{3}json|`{3}/gi,'').trim();
-    currentResult=JSON.parse(clean);
+    const clean=raw.replace(/```json|```/gi,'').trim();
+    let parsed;
+    try{parsed=JSON.parse(clean);}
+    catch(pe){
+      // Try to extract JSON from response
+      const match=clean.match(/\{[\s\S]*\}/);
+      if(match)parsed=JSON.parse(match[0]);
+      else throw new Error('Bad JSON from API: '+clean.slice(0,80));
+    }
+    currentResult=parsed;
     scannedCount++;
     renderResult(currentResult);
     ls.classList.remove('show');
@@ -1954,7 +1969,8 @@ Return ONLY valid JSON, no markdown, no fences:
   }catch(e){
     clearInterval(st);
     ls.classList.remove('show');
-    showToast('Analysis failed: '+e.message.slice(0,60));
+    showToast('Error: '+e.message.slice(0,80));
+    console.error('Analysis error:',e);
   }
 }
 
