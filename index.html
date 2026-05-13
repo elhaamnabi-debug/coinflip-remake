@@ -146,22 +146,60 @@ html,body{
   display:flex;
   flex-direction:column;
   align-items:center;
-  padding:0 20px 12px;
+  padding:0 16px 12px;
   overflow:hidden;
 }
+
+/* Two-photo row */
+.vf-row{
+  display:flex;
+  gap:10px;
+  width:100%;
+  max-width:353px;
+  flex-shrink:0;
+}
+
+/* Each viewfinder panel */
+.vf-panel{
+  flex:1;
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+}
+.vf-label-row{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:0 2px;
+}
+.vf-label{
+  font-size:12px;font-weight:700;
+  color:var(--text);
+  letter-spacing:0.02em;
+}
+.vf-label-req{
+  font-size:11px;font-weight:600;
+  color:var(--muted);
+}
+.vf-label-req.done{color:var(--green)}
 
 /* Viewfinder */
 .vf-container{
   position:relative;
   width:100%;
-  max-width:353px;
-  border-radius:var(--r-xl);
+  border-radius:var(--r-lg);
   overflow:hidden;
   background:#000;
   flex-shrink:0;
   cursor:pointer;
   aspect-ratio:1;
+  transition:box-shadow 0.2s;
 }
+.vf-container.has-photo{
+  box-shadow:0 0 0 2.5px var(--purple);
+}
+.vf-container:active{opacity:0.85}
+
 .vf-img{
   position:absolute;inset:0;
   width:100%;height:100%;
@@ -175,74 +213,93 @@ html,body{
   position:absolute;inset:0;
   display:flex;flex-direction:column;
   align-items:center;justify-content:center;
-  gap:12px;
+  gap:8px;
 }
 .vf-camera-bg{
   position:absolute;inset:0;
   background:linear-gradient(180deg,#1a1a2e 0%,#16213e 50%,#0f3460 100%);
 }
 
-/* Coin target circle */
+/* Coin target circle — sized for small panels */
 .vf-target{
   position:relative;
-  width:180px;height:180px;
+  width:88px;height:88px;
   border-radius:50%;
-  border:2px solid rgba(255,255,255,0.25);
+  border:1.5px solid rgba(255,255,255,0.25);
   display:flex;align-items:center;justify-content:center;
   z-index:2;
 }
 .vf-target::before{
   content:'';
-  position:absolute;inset:-8px;
+  position:absolute;inset:-6px;
   border-radius:50%;
-  border:1.5px dashed rgba(255,255,255,0.15);
+  border:1px dashed rgba(255,255,255,0.15);
 }
 .vf-target-inner{
-  width:160px;height:160px;
+  width:76px;height:76px;
   border-radius:50%;
   background:rgba(255,255,255,0.05);
   display:flex;align-items:center;justify-content:center;
-  font-size:60px;
+  font-size:30px;
 }
 /* Scanning arc */
 .vf-arc{
-  position:absolute;inset:-3px;
+  position:absolute;inset:-2px;
   border-radius:50%;
-  border:3px solid transparent;
+  border:2px solid transparent;
   border-top-color:var(--purple-l);
   animation:arcSpin 1.8s linear infinite;
 }
 @keyframes arcSpin{to{transform:rotate(360deg)}}
 
-/* Value badge on viewfinder */
-.vf-badge{
+/* Plus icon overlay for empty state */
+.vf-plus{
   position:absolute;
-  bottom:16px;
-  left:50%;
-  transform:translateX(-50%);
-  background:rgba(0,0,0,0.65);
-  backdrop-filter:blur(12px);
-  border:1px solid rgba(255,255,255,0.15);
-  border-radius:20px;
-  padding:7px 18px;
-  display:none;
+  bottom:8px;right:8px;
+  width:24px;height:24px;border-radius:50%;
+  background:rgba(255,255,255,0.18);
+  display:flex;align-items:center;justify-content:center;
   z-index:3;
-  white-space:nowrap;
+  font-size:16px;font-weight:300;color:#fff;
+  line-height:1;
 }
-.vf-badge.show{display:block}
-.vf-badge-val{font-size:22px;font-weight:800;color:#fff;text-align:center}
-.vf-badge-lbl{font-size:11px;color:rgba(255,255,255,0.55);text-align:center;margin-top:1px;letter-spacing:0.05em;text-transform:uppercase}
+
+/* Checkmark overlay when photo loaded */
+.vf-check{
+  position:absolute;
+  bottom:8px;right:8px;
+  width:24px;height:24px;border-radius:50%;
+  background:var(--green);
+  display:none;align-items:center;justify-content:center;
+  z-index:3;
+  font-size:13px;color:#fff;
+}
+.vf-container.has-photo .vf-check{display:flex}
+.vf-container.has-photo .vf-plus{display:none}
 
 /* Hint text inside VF */
 .vf-hint-text{
   position:absolute;
-  top:18px;left:0;right:0;
+  bottom:6px;left:0;right:0;
   text-align:center;
-  font-size:13px;font-weight:600;
-  color:rgba(255,255,255,0.7);
+  font-size:10px;font-weight:600;
+  color:rgba(255,255,255,0.55);
   z-index:2;
   pointer-events:none;
 }
+
+/* Value badge — shown below after scan */
+.vf-badge{
+  display:none;
+  background:var(--bg-card);
+  border-radius:12px;
+  padding:6px 10px;
+  text-align:center;
+  margin-top:2px;
+}
+.vf-badge.show{display:block}
+.vf-badge-val{font-size:18px;font-weight:800;color:var(--text)}
+.vf-badge-lbl{font-size:10px;color:var(--muted);letter-spacing:0.05em;text-transform:uppercase;margin-top:1px}
 
 /* Quick stats strip */
 .scan-stats{
@@ -1133,25 +1190,63 @@ html,body{
     </div>
 
     <div class="scan-body">
-      <!-- Viewfinder -->
-      <div class="vf-container" id="vfContainer" onclick="triggerUpload()">
-        <div class="vf-camera-bg"></div>
-        <img class="vf-img" id="vfImg" alt="">
-        <div class="vf-overlay">
-          <div class="vf-hint-text" id="vfHint">Position coin within the circle</div>
-          <div class="vf-target">
-            <div class="vf-arc" id="vfArc"></div>
-            <div class="vf-target-inner" id="vfTargetInner">🪙</div>
+      <!-- Two viewfinders: Obverse + Reverse -->
+      <div class="vf-row">
+        <!-- Obverse -->
+        <div class="vf-panel">
+          <div class="vf-label-row">
+            <span class="vf-label">Obverse</span>
+            <span class="vf-label-req" id="obvReq">Required</span>
+          </div>
+          <div class="vf-container" id="vfObv" onclick="triggerUpload('obv')">
+            <div class="vf-camera-bg"></div>
+            <img class="vf-img" id="vfImgObv" alt="">
+            <div class="vf-overlay" id="vfOvlObv">
+              <div class="vf-target">
+                <div class="vf-arc"></div>
+                <div class="vf-target-inner">🪙</div>
+              </div>
+              <div class="vf-hint-text">Heads side</div>
+            </div>
+            <div class="vf-plus">+</div>
+            <div class="vf-check">✓</div>
           </div>
         </div>
-        <div class="vf-badge" id="vfBadge">
-          <div class="vf-badge-val" id="vfBadgeVal">$0</div>
-          <div class="vf-badge-lbl">Est. Value</div>
+
+        <!-- Reverse -->
+        <div class="vf-panel">
+          <div class="vf-label-row">
+            <span class="vf-label">Reverse</span>
+            <span class="vf-label-req" id="revReq">Optional</span>
+          </div>
+          <div class="vf-container" id="vfRev" onclick="triggerUpload('rev')">
+            <div class="vf-camera-bg" style="background:linear-gradient(180deg,#1a2e1a 0%,#0f3420 50%,#0f3460 100%)"></div>
+            <img class="vf-img" id="vfImgRev" alt="">
+            <div class="vf-overlay" id="vfOvlRev">
+              <div class="vf-target">
+                <div class="vf-arc" style="border-top-color:var(--teal)"></div>
+                <div class="vf-target-inner">🦅</div>
+              </div>
+              <div class="vf-hint-text">Tails side</div>
+            </div>
+            <div class="vf-plus">+</div>
+            <div class="vf-check">✓</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Progress strip -->
+      <div style="width:100%;max-width:353px;margin-top:10px;flex-shrink:0">
+        <div style="display:flex;align-items:center;gap:8px">
+          <div style="flex:1;height:3px;border-radius:2px;background:var(--bg-input);overflow:hidden">
+            <div id="photoProgress" style="height:100%;border-radius:2px;background:linear-gradient(90deg,var(--purple),var(--teal));width:0%;transition:width 0.4s ease"></div>
+          </div>
+          <span id="photoCount" style="font-size:11px;font-weight:700;color:var(--muted);white-space:nowrap">0 / 2 photos</span>
         </div>
       </div>
 
       <!-- Quick stats strip -->
-      <div class="scan-stats">
+      <div class="scan-stats" style="margin-top:10px">
         <div class="ss-item ss-grade">
           <div class="ss-val" id="ssGrade">—</div>
           <div class="ss-lbl">Grade</div>
@@ -1173,9 +1268,13 @@ html,body{
           Identify Coin
         </button>
         <div class="btn-row">
-          <button class="btn-sec" onclick="triggerUpload()">
+          <button class="btn-sec" onclick="triggerUpload('obv')">
             <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-            Upload Photo
+            Obverse
+          </button>
+          <button class="btn-sec" onclick="triggerUpload('rev')">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+            Reverse
           </button>
           <button class="btn-sec" onclick="clearScan()">
             <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.59"/></svg>
@@ -1576,10 +1675,13 @@ html,body{
 
 <script>
 // ── State ──
-let uploadedB64=null, uploadedMime=null, uploadedDataUrl=null;
+let obvB64=null, obvMime=null, obvDataUrl=null;
+let revB64=null, revMime=null, revDataUrl=null;
+let uploadedDataUrl=null; // used for hero image (obverse preferred)
 let currentResult=null;
 const collection=[];
 let scannedCount=0;
+let _pendingSlot=null; // which slot the file input is loading for
 
 // ── Time ──
 function updateTime(){
@@ -1613,29 +1715,65 @@ function switchTab(name,el){
   document.getElementById('tab-'+name).classList.add('active');
 }
 
+// ── Update photo progress UI ──
+function updatePhotoProgress(){
+  const count=(obvB64?1:0)+(revB64?1:0);
+  document.getElementById('photoProgress').style.width=(count/2*100)+'%';
+  document.getElementById('photoCount').textContent=count+' / 2 photos';
+  // obverse label
+  const oReq=document.getElementById('obvReq');
+  oReq.textContent=obvB64?'✓ Ready':'Required';
+  oReq.className='vf-label-req'+(obvB64?' done':'');
+  // reverse label
+  const rReq=document.getElementById('revReq');
+  rReq.textContent=revB64?'✓ Added':'Optional';
+  rReq.className='vf-label-req'+(revB64?' done':'');
+  // container ring
+  document.getElementById('vfObv').className='vf-container'+(obvB64?' has-photo':'');
+  document.getElementById('vfRev').className='vf-container'+(revB64?' has-photo':'');
+}
+
 // ── File upload ──
+function triggerUpload(slot){
+  _pendingSlot=slot||'obv';
+  document.getElementById('fileInput').click();
+}
 document.getElementById('fileInput').addEventListener('change',e=>{
   const f=e.target.files[0]; if(!f)return;
+  const slot=_pendingSlot||'obv';
   const reader=new FileReader();
   reader.onload=ev=>{
-    uploadedDataUrl=ev.target.result;
-    uploadedB64=ev.target.result.split(',')[1];
-    uploadedMime=f.type||'image/jpeg';
-    const img=document.getElementById('vfImg');
-    img.src=uploadedDataUrl; img.classList.add('show');
-    document.querySelector('.vf-overlay').style.display='none';
+    const dataUrl=ev.target.result;
+    const b64=dataUrl.split(',')[1];
+    const mime=f.type||'image/jpeg';
+    if(slot==='obv'){
+      obvDataUrl=dataUrl; obvB64=b64; obvMime=mime;
+      const img=document.getElementById('vfImgObv');
+      img.src=dataUrl; img.classList.add('show');
+      document.getElementById('vfOvlObv').style.display='none';
+    } else {
+      revDataUrl=dataUrl; revB64=b64; revMime=mime;
+      const img=document.getElementById('vfImgRev');
+      img.src=dataUrl; img.classList.add('show');
+      document.getElementById('vfOvlRev').style.display='none';
+    }
+    uploadedDataUrl=obvDataUrl||revDataUrl;
+    updatePhotoProgress();
   };
   reader.readAsDataURL(f);
   e.target.value='';
 });
-function triggerUpload(){document.getElementById('fileInput').click()}
+
 function clearScan(){
-  uploadedB64=null; uploadedMime=null; uploadedDataUrl=null;
-  const img=document.getElementById('vfImg');
-  img.src=''; img.classList.remove('show');
-  document.querySelector('.vf-overlay').style.display='';
-  document.getElementById('vfBadge').classList.remove('show');
+  obvB64=null; obvMime=null; obvDataUrl=null;
+  revB64=null; revMime=null; revDataUrl=null;
+  uploadedDataUrl=null;
+  ['vfImgObv','vfImgRev'].forEach(id=>{const i=document.getElementById(id);i.src='';i.classList.remove('show');});
+  document.getElementById('vfOvlObv').style.display='';
+  document.getElementById('vfOvlRev').style.display='';
+  document.getElementById('vfBadge')&&document.getElementById('vfBadge').classList.remove('show');
   ['ssGrade','ssRarity','ssValue'].forEach(id=>document.getElementById(id).textContent='—');
+  updatePhotoProgress();
 }
 
 // ── Loading steps ──
@@ -1651,13 +1789,23 @@ const loadSteps=[
 
 // ── Run AI scan ──
 async function runAnalysis(){
-  if(!uploadedB64){showToast('Upload a coin photo first'); return;}
+  if(!obvB64){showToast('Upload the obverse (heads) photo first'); return;}
   const ls=document.getElementById('loadingScreen');
   const lt=document.getElementById('loadingTitle');
   const lsub=document.getElementById('loadingSub');
   ls.classList.add('show');
   let si=0;
   const st=setInterval(()=>{si=(si+1)%loadSteps.length; lt.textContent=loadSteps[si][0]; lsub.textContent=loadSteps[si][1];},700);
+
+  // Build content array — always include obverse, add reverse if present
+  const imgContent=[];
+  imgContent.push({type:'image',source:{type:'base64',media_type:obvMime,data:obvB64}});
+  if(revB64){
+    imgContent.push({type:'image',source:{type:'base64',media_type:revMime,data:revB64}});
+  }
+  const sideNote=revB64
+    ? 'You have been given TWO images: the first is the OBVERSE (heads side), the second is the REVERSE (tails side). Analyze both together for a complete identification and grading.'
+    : 'You have been given ONE image: the OBVERSE (heads side). Base your analysis on it alone; note if a reverse would help confirm identification.';
 
   try{
     const res=await fetch('https://api.anthropic.com/v1/messages',{
@@ -1667,8 +1815,8 @@ async function runAnalysis(){
         model:'claude-sonnet-4-20250514',
         max_tokens:2500,
         messages:[{role:'user',content:[
-          {type:'image',source:{type:'base64',media_type:uploadedMime,data:uploadedB64}},
-          {type:'text',text:`You are a senior PCGS/NGC-certified numismatist AI. Examine this coin image with extreme care.
+          ...imgContent,
+          {type:'text',text:`You are a senior PCGS/NGC-certified numismatist AI. ${sideNote}
 
 TASK 1 — IDENTIFY & GRADE the coin (country, year, mint, denomination, Sheldon grade).
 TASK 2 — SCAN EVERY VISIBLE SURFACE for defects, errors, and varieties. Look for:
@@ -1809,6 +1957,7 @@ Return ONLY valid JSON, no markdown, no fences:
     showToast('Analysis failed: '+e.message.slice(0,60));
   }
 }
+
 
 // ── Render result ──
 function renderResult(r){
