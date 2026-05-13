@@ -1,0 +1,2180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>CoinSnap — Coin Identifier</title>
+<link href="https://fonts.googleapis.com/css2?family=SF+Pro+Display:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+:root{
+  /* CoinSnap exact colors from screenshots */
+  --bg:        #F2F2F7;   /* iOS system background */
+  --bg-card:   #FFFFFF;
+  --bg-group:  #F2F2F7;
+  --bg-input:  #EBEBF0;
+  --text:      #1C1C1E;
+  --text2:     #3A3A3C;
+  --muted:     #8E8E93;
+  --sep:       rgba(60,60,67,0.12);
+  --blue:      #007AFF;
+  --purple:    #5E5CE6;
+  --purple-l:  #7B79F7;
+  --gold:      #FF9500;
+  --gold-l:    #FFB340;
+  --green:     #34C759;
+  --red:       #FF3B30;
+  --teal:      #5AC8FA;
+  --nav-bg:    rgba(242,242,247,0.92);
+  --nav-h:     83px;
+  --font:      'Inter', -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
+  --r:         12px;
+  --r-lg:      16px;
+  --r-xl:      22px;
+}
+
+/* Dark mode */
+@media(prefers-color-scheme:dark){
+  :root{
+    --bg:       #000000;
+    --bg-card:  #1C1C1E;
+    --bg-group: #1C1C1E;
+    --bg-input: #2C2C2E;
+    --text:     #FFFFFF;
+    --text2:    #EBEBF0;
+    --muted:    #8E8E93;
+    --sep:      rgba(84,84,88,0.6);
+    --nav-bg:   rgba(28,28,30,0.92);
+  }
+}
+
+html,body{
+  height:100%;
+  font-family:var(--font);
+  background:#000;
+  color:var(--text);
+  overflow:hidden;
+  -webkit-font-smoothing:antialiased;
+}
+
+/* ── SHELL — phone frame ── */
+.shell{
+  max-width:393px;
+  height:100vh;
+  margin:0 auto;
+  display:flex;
+  flex-direction:column;
+  background:var(--bg);
+  position:relative;
+  overflow:hidden;
+}
+
+/* ── STATUS BAR ── */
+.status-bar{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:14px 20px 6px;
+  flex-shrink:0;
+  background:var(--bg);
+  position:relative;
+  z-index:10;
+}
+.sb-time{font-size:15px;font-weight:700;letter-spacing:-0.3px}
+.sb-icons{display:flex;align-items:center;gap:7px}
+.sb-icon{color:var(--text)}
+
+/* ── SCREENS ── */
+.screen{
+  display:none;
+  flex:1;
+  flex-direction:column;
+  overflow:hidden;
+  background:var(--bg);
+}
+.screen.active{display:flex}
+
+/* ── NAVIGATION BAR (top) ── */
+.nav-bar{
+  display:flex;
+  align-items:flex-end;
+  justify-content:space-between;
+  padding:6px 20px 12px;
+  flex-shrink:0;
+  background:var(--bg);
+}
+.nav-title{
+  font-size:34px;
+  font-weight:800;
+  letter-spacing:-0.5px;
+  color:var(--text);
+  line-height:1;
+}
+.nav-subtitle{
+  font-size:13px;
+  color:var(--muted);
+  margin-top:2px;
+  font-weight:500;
+}
+.nav-btn{
+  width:34px;height:34px;
+  border-radius:50%;
+  background:var(--bg-input);
+  border:none;
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;
+  color:var(--blue);
+  font-size:18px;
+  transition:opacity 0.15s;
+}
+.nav-btn:hover{opacity:0.75}
+.nav-btn-sm{
+  width:30px;height:30px;
+  border-radius:50%;
+  background:var(--bg-input);
+  border:none;
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;
+  color:var(--text);
+  font-size:14px;
+}
+
+/* ── SCAN SCREEN ── */
+.scan-body{
+  flex:1;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  padding:0 20px 12px;
+  overflow:hidden;
+}
+
+/* Viewfinder */
+.vf-container{
+  position:relative;
+  width:100%;
+  max-width:353px;
+  border-radius:var(--r-xl);
+  overflow:hidden;
+  background:#000;
+  flex-shrink:0;
+  cursor:pointer;
+  aspect-ratio:1;
+}
+.vf-img{
+  position:absolute;inset:0;
+  width:100%;height:100%;
+  object-fit:cover;
+  display:none;
+}
+.vf-img.show{display:block}
+
+/* Dark camera overlay */
+.vf-overlay{
+  position:absolute;inset:0;
+  display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  gap:12px;
+}
+.vf-camera-bg{
+  position:absolute;inset:0;
+  background:linear-gradient(180deg,#1a1a2e 0%,#16213e 50%,#0f3460 100%);
+}
+
+/* Coin target circle */
+.vf-target{
+  position:relative;
+  width:180px;height:180px;
+  border-radius:50%;
+  border:2px solid rgba(255,255,255,0.25);
+  display:flex;align-items:center;justify-content:center;
+  z-index:2;
+}
+.vf-target::before{
+  content:'';
+  position:absolute;inset:-8px;
+  border-radius:50%;
+  border:1.5px dashed rgba(255,255,255,0.15);
+}
+.vf-target-inner{
+  width:160px;height:160px;
+  border-radius:50%;
+  background:rgba(255,255,255,0.05);
+  display:flex;align-items:center;justify-content:center;
+  font-size:60px;
+}
+/* Scanning arc */
+.vf-arc{
+  position:absolute;inset:-3px;
+  border-radius:50%;
+  border:3px solid transparent;
+  border-top-color:var(--purple-l);
+  animation:arcSpin 1.8s linear infinite;
+}
+@keyframes arcSpin{to{transform:rotate(360deg)}}
+
+/* Value badge on viewfinder */
+.vf-badge{
+  position:absolute;
+  bottom:16px;
+  left:50%;
+  transform:translateX(-50%);
+  background:rgba(0,0,0,0.65);
+  backdrop-filter:blur(12px);
+  border:1px solid rgba(255,255,255,0.15);
+  border-radius:20px;
+  padding:7px 18px;
+  display:none;
+  z-index:3;
+  white-space:nowrap;
+}
+.vf-badge.show{display:block}
+.vf-badge-val{font-size:22px;font-weight:800;color:#fff;text-align:center}
+.vf-badge-lbl{font-size:11px;color:rgba(255,255,255,0.55);text-align:center;margin-top:1px;letter-spacing:0.05em;text-transform:uppercase}
+
+/* Hint text inside VF */
+.vf-hint-text{
+  position:absolute;
+  top:18px;left:0;right:0;
+  text-align:center;
+  font-size:13px;font-weight:600;
+  color:rgba(255,255,255,0.7);
+  z-index:2;
+  pointer-events:none;
+}
+
+/* Quick stats strip */
+.scan-stats{
+  display:flex;
+  gap:0;
+  width:100%;
+  max-width:353px;
+  margin-top:10px;
+  background:var(--bg-card);
+  border-radius:var(--r-lg);
+  overflow:hidden;
+  flex-shrink:0;
+}
+.ss-item{
+  flex:1;
+  padding:11px 6px;
+  text-align:center;
+  border-right:1px solid var(--sep);
+}
+.ss-item:last-child{border-right:none}
+.ss-val{font-size:15px;font-weight:700;color:var(--text);margin-bottom:1px}
+.ss-lbl{font-size:10px;font-weight:500;color:var(--muted);letter-spacing:0.04em;text-transform:uppercase}
+.ss-item.ss-grade .ss-val{color:var(--purple)}
+.ss-item.ss-rarity .ss-val{color:var(--gold)}
+.ss-item.ss-value .ss-val{color:var(--green)}
+
+/* Scan action buttons */
+.scan-actions{
+  width:100%;
+  max-width:353px;
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+  margin-top:12px;
+  flex-shrink:0;
+}
+.btn-primary{
+  width:100%;
+  padding:16px;
+  background:var(--purple);
+  border:none;
+  border-radius:var(--r-lg);
+  color:#fff;
+  font-family:var(--font);
+  font-size:17px;
+  font-weight:700;
+  cursor:pointer;
+  display:flex;align-items:center;justify-content:center;gap:9px;
+  transition:opacity 0.15s,transform 0.1s;
+  letter-spacing:-0.2px;
+}
+.btn-primary:hover{opacity:0.88}
+.btn-primary:active{transform:scale(0.98)}
+
+.btn-row{display:flex;gap:10px}
+.btn-sec{
+  flex:1;
+  padding:14px 12px;
+  background:var(--bg-card);
+  border:none;
+  border-radius:var(--r-lg);
+  color:var(--blue);
+  font-family:var(--font);
+  font-size:15px;
+  font-weight:600;
+  cursor:pointer;
+  display:flex;align-items:center;justify-content:center;gap:7px;
+  transition:opacity 0.15s;
+}
+.btn-sec:hover{opacity:0.75}
+
+/* ── RESULT SCREEN ── */
+.result-nav{
+  display:flex;align-items:center;gap:10px;
+  padding:6px 16px 10px;
+  flex-shrink:0;
+}
+.back-btn{
+  display:flex;align-items:center;gap:2px;
+  font-size:17px;font-weight:400;
+  color:var(--blue);
+  cursor:pointer;
+  background:none;border:none;
+  padding:4px 0;
+}
+.back-btn svg{flex-shrink:0}
+.result-nav-title{
+  flex:1;
+  font-size:17px;font-weight:600;
+  text-align:center;
+  color:var(--text);
+  letter-spacing:-0.2px;
+}
+.save-btn{
+  font-size:17px;font-weight:600;
+  color:var(--blue);
+  background:none;border:none;
+  cursor:pointer;padding:4px 0;
+}
+.save-btn.saved{color:var(--green)}
+
+.result-scroll{
+  flex:1;
+  overflow-y:auto;
+  padding:0 16px 16px;
+  scrollbar-width:none;
+}
+.result-scroll::-webkit-scrollbar{display:none}
+
+/* Coin image hero */
+.coin-hero-img{
+  width:100%;
+  height:220px;
+  border-radius:var(--r-xl);
+  background:linear-gradient(135deg,#1a1a2e,#16213e,#0f3460);
+  display:flex;align-items:center;justify-content:center;
+  position:relative;
+  overflow:hidden;
+  margin-bottom:14px;
+  flex-shrink:0;
+}
+.coin-hero-img img{
+  width:100%;height:100%;
+  object-fit:cover;
+  border-radius:var(--r-xl);
+  display:none;
+  position:absolute;inset:0;
+}
+.coin-hero-img img.show{display:block}
+.chi-emoji{font-size:80px;z-index:1}
+.coin-badge{
+  position:absolute;
+  top:14px;right:14px;
+  padding:5px 12px;
+  border-radius:20px;
+  font-size:12px;font-weight:700;
+  letter-spacing:0.03em;
+  z-index:2;
+}
+.cb-choice{background:rgba(255,149,0,0.9);color:#fff}
+.cb-rare{background:rgba(255,59,48,0.9);color:#fff}
+.cb-error{background:rgba(94,92,230,0.9);color:#fff}
+.cb-common{background:rgba(52,199,89,0.85);color:#fff}
+.cb-key{background:rgba(255,45,85,0.9);color:#fff}
+
+/* Coin title section */
+.coin-title-section{
+  background:var(--bg-card);
+  border-radius:var(--r-xl);
+  padding:18px;
+  margin-bottom:12px;
+}
+.coin-name-row{
+  display:flex;align-items:flex-start;justify-content:space-between;
+  margin-bottom:4px;
+}
+.coin-name{
+  font-size:22px;font-weight:800;
+  letter-spacing:-0.4px;
+  color:var(--text);
+  line-height:1.15;
+  flex:1;padding-right:10px;
+}
+.coin-origin{
+  font-size:14px;font-weight:500;
+  color:var(--muted);
+  margin-bottom:14px;
+}
+
+/* Rarity bar — exactly like CoinSnap */
+.rarity-section{margin-bottom:16px}
+.rarity-header{
+  display:flex;align-items:center;justify-content:space-between;
+  margin-bottom:7px;
+}
+.rarity-header-lbl{font-size:13px;font-weight:600;color:var(--text)}
+.rarity-header-val{font-size:13px;font-weight:700}
+.rarity-track{
+  height:8px;
+  background:var(--bg-input);
+  border-radius:4px;
+  overflow:hidden;
+}
+.rarity-fill{
+  height:100%;
+  border-radius:4px;
+  transition:width 0.8s cubic-bezier(0.34,1.56,0.64,1);
+}
+
+/* Value blocks */
+.value-blocks{
+  display:flex;gap:10px;
+}
+.vb{
+  flex:1;
+  background:var(--bg-group);
+  border-radius:var(--r);
+  padding:12px;
+  text-align:center;
+}
+.vb-num{font-size:20px;font-weight:800;letter-spacing:-0.3px;margin-bottom:2px}
+.vb-lbl{font-size:11px;font-weight:500;color:var(--muted);text-transform:uppercase;letter-spacing:0.05em}
+.vb.vb-col .vb-num{color:var(--text)}
+.vb.vb-melt .vb-num{color:var(--blue)}
+
+/* iOS segmented control style tabs */
+.seg-control{
+  display:flex;
+  background:var(--bg-input);
+  border-radius:9px;
+  padding:2px;
+  margin-bottom:14px;
+  flex-shrink:0;
+}
+.seg-item{
+  flex:1;
+  padding:7px 4px;
+  border-radius:7px;
+  text-align:center;
+  font-size:12px;font-weight:600;
+  color:var(--muted);
+  cursor:pointer;
+  transition:all 0.2s;
+  letter-spacing:0.01em;
+  white-space:nowrap;
+}
+.seg-item.active{
+  background:var(--bg-card);
+  color:var(--text);
+  box-shadow:0 1px 4px rgba(0,0,0,0.15);
+}
+
+.tab-panel{display:none}
+.tab-panel.active{display:block}
+
+/* iOS grouped list style */
+.ios-group{
+  background:var(--bg-card);
+  border-radius:var(--r-xl);
+  overflow:hidden;
+  margin-bottom:12px;
+}
+.ios-group-label{
+  font-size:13px;font-weight:600;
+  color:var(--muted);
+  text-transform:uppercase;
+  letter-spacing:0.05em;
+  padding:0 4px;
+  margin:18px 0 6px;
+}
+.ios-row{
+  display:flex;align-items:center;
+  padding:13px 16px;
+  min-height:44px;
+}
+.ios-row+.ios-row{
+  border-top:1px solid var(--sep);
+}
+.ios-row-key{
+  font-size:15px;font-weight:400;
+  color:var(--text);
+  flex:1;
+}
+.ios-row-val{
+  font-size:15px;font-weight:400;
+  color:var(--muted);
+  text-align:right;
+  max-width:55%;
+}
+.ios-row-val.bold{font-weight:600;color:var(--text)}
+.ios-row-val.blue{color:var(--blue)}
+.ios-row-val.green{color:var(--green)}
+.ios-row-val.gold{color:var(--gold)}
+.ios-row-val.red{color:var(--red)}
+
+/* Grade circle — exact CoinSnap style */
+.grade-hero{
+  display:flex;align-items:center;gap:16px;
+  padding:18px;
+  background:var(--bg-card);
+  border-radius:var(--r-xl);
+  margin-bottom:12px;
+}
+.grade-ring{
+  width:72px;height:72px;border-radius:50%;flex-shrink:0;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  position:relative;
+}
+.grade-ring svg{position:absolute;inset:0;width:100%;height:100%}
+.grade-ring-inner{position:relative;z-index:1;text-align:center}
+.grade-num{font-size:22px;font-weight:900;line-height:1;letter-spacing:-0.5px}
+.grade-sub-lbl{font-size:9px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);margin-top:1px}
+.grade-info{flex:1;min-width:0}
+.grade-label{font-size:17px;font-weight:700;margin-bottom:4px;letter-spacing:-0.2px}
+.grade-desc-text{font-size:13px;color:var(--muted);line-height:1.5}
+
+/* Surface bars in grading tab */
+.surface-bar-row{
+  display:flex;align-items:center;gap:12px;
+  padding:10px 16px;
+}
+.surface-bar-row+.surface-bar-row{border-top:1px solid var(--sep)}
+.sbr-label{font-size:15px;font-weight:400;color:var(--text);width:110px;flex-shrink:0}
+.sbr-track{flex:1;height:6px;background:var(--bg-input);border-radius:3px;overflow:hidden}
+.sbr-fill{height:100%;border-radius:3px;transition:width 0.8s cubic-bezier(0.34,1,0.64,1)}
+.sbr-val{font-size:13px;font-weight:600;width:36px;text-align:right;flex-shrink:0}
+
+/* Grade price table */
+.grade-price-table{width:100%;border-collapse:collapse}
+.gpt th{
+  font-size:12px;font-weight:600;
+  color:var(--muted);
+  letter-spacing:0.05em;text-transform:uppercase;
+  padding:8px 16px;text-align:left;
+  border-bottom:1px solid var(--sep);
+}
+.gpt td{
+  padding:12px 16px;
+  font-size:15px;
+  border-bottom:1px solid var(--sep);
+}
+.gpt tr:last-child td{border-bottom:none}
+.gpt .row-current{background:rgba(94,92,230,0.07)}
+.gpt .row-current td:first-child{color:var(--purple);font-weight:700}
+.gpt .gpt-price{font-weight:600;color:var(--text)}
+.gpt .gpt-this{
+  font-size:11px;font-weight:700;
+  padding:2px 8px;border-radius:6px;
+  background:rgba(94,92,230,0.12);
+  color:var(--purple);
+  margin-left:6px;vertical-align:middle;
+}
+
+/* Error tab */
+.error-summary-card{
+  border-radius:var(--r-xl);
+  overflow:hidden;
+  margin-bottom:12px;
+}
+.esc-header{
+  padding:16px;
+}
+.esc-title{
+  font-size:13px;font-weight:700;
+  text-transform:uppercase;letter-spacing:0.08em;
+  margin-bottom:12px;
+}
+.esc-grid{
+  display:grid;grid-template-columns:1fr 1fr 1fr;
+  gap:8px;
+  margin-bottom:12px;
+}
+.esc-block{
+  background:rgba(0,0,0,0.12);
+  border-radius:10px;
+  padding:10px 8px;
+  text-align:center;
+}
+.esc-block-num{font-size:20px;font-weight:900;line-height:1;margin-bottom:2px}
+.esc-block-lbl{font-size:10px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:rgba(255,255,255,0.6)}
+.esc-adj-row{
+  background:rgba(0,0,0,0.12);
+  border-radius:10px;
+  padding:12px 14px;
+  display:flex;align-items:center;justify-content:space-between;
+}
+.esc-adj-lbl{font-size:13px;font-weight:600;color:rgba(255,255,255,0.7)}
+.esc-adj-val{font-size:18px;font-weight:900;color:#fff}
+.esc-verdict{
+  font-size:12px;
+  line-height:1.5;
+  margin-top:10px;
+  opacity:0.85;
+}
+
+.error-card{
+  background:var(--bg-card);
+  border-radius:var(--r-xl);
+  overflow:hidden;
+  margin-bottom:10px;
+}
+.error-card-header{
+  display:flex;align-items:flex-start;gap:12px;
+  padding:14px 16px;
+}
+.error-dot2{
+  width:10px;height:10px;border-radius:50%;
+  flex-shrink:0;margin-top:3px;
+}
+.error-card-title{font-size:15px;font-weight:700;flex:1;letter-spacing:-0.1px}
+.error-detected-badge{
+  font-size:11px;font-weight:700;
+  padding:3px 9px;border-radius:20px;
+  flex-shrink:0;
+}
+.edb-yes{background:rgba(52,199,89,0.15);color:var(--green)}
+.edb-no{background:rgba(142,142,147,0.15);color:var(--muted)}
+.error-card-body{
+  padding:0 16px 14px;
+  border-top:1px solid var(--sep);
+}
+.error-location{
+  display:flex;align-items:center;gap:6px;
+  font-size:12px;color:var(--muted);font-weight:500;
+  padding:9px 0 8px;
+}
+.error-desc-text{font-size:13px;color:var(--text2);line-height:1.55;margin-bottom:10px}
+.error-market-note{font-size:12px;color:var(--muted);font-style:italic;line-height:1.4;margin-bottom:10px}
+.error-delta-row{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:10px 12px;
+  border-radius:10px;
+  margin-top:4px;
+}
+.edR-lbl{font-size:12px;font-weight:600}
+.edR-val{font-size:18px;font-weight:900}
+
+/* Auth tab */
+.auth-verdict-card{
+  border-radius:var(--r-xl);
+  padding:16px;
+  margin-bottom:12px;
+  display:flex;align-items:center;gap:14px;
+}
+.auth-icon-wrap{
+  width:48px;height:48px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:22px;flex-shrink:0;
+}
+.avc-genuine{background:rgba(52,199,89,0.15)}
+.avc-suspect{background:rgba(255,59,48,0.15)}
+.auth-verdict-text{flex:1}
+.avt-title{font-size:17px;font-weight:700;margin-bottom:3px}
+.avt-conf{font-size:13px;color:var(--muted)}
+.auth-pct{font-size:28px;font-weight:900;letter-spacing:-0.5px}
+
+.melt-total-row{
+  padding:14px 16px;
+  background:rgba(255,149,0,0.08);
+  border-top:1px solid var(--sep);
+  display:flex;align-items:center;justify-content:space-between;
+}
+.melt-total-lbl{font-size:15px;font-weight:700;color:var(--gold)}
+.melt-total-val{font-size:20px;font-weight:900;color:var(--gold)}
+
+/* ── COLLECTION SCREEN ── */
+.coll-summary-card{
+  margin:0 16px 14px;
+  background:var(--purple);
+  border-radius:var(--r-xl);
+  padding:18px;
+  position:relative;
+  overflow:hidden;
+}
+.csc-bg-circle{
+  position:absolute;
+  width:180px;height:180px;
+  border-radius:50%;
+  background:rgba(255,255,255,0.08);
+  right:-40px;top:-40px;
+}
+.csc-label{font-size:13px;font-weight:600;color:rgba(255,255,255,0.7);margin-bottom:4px;position:relative}
+.csc-total{font-size:38px;font-weight:900;color:#fff;letter-spacing:-0.8px;position:relative;margin-bottom:12px;line-height:1}
+.csc-metals{display:flex;gap:8px;flex-wrap:wrap;position:relative}
+.metal-chip{
+  display:flex;align-items:center;gap:6px;
+  background:rgba(255,255,255,0.15);
+  border-radius:20px;
+  padding:5px 12px;
+  font-size:12px;font-weight:600;color:#fff;
+}
+.metal-chip-dot{width:6px;height:6px;border-radius:50%}
+
+.coll-scroll{
+  flex:1;
+  overflow-y:auto;
+  padding:0 16px 8px;
+  scrollbar-width:none;
+}
+.coll-scroll::-webkit-scrollbar{display:none}
+.coll-section-hdr{
+  font-size:13px;font-weight:600;
+  color:var(--muted);
+  text-transform:uppercase;
+  letter-spacing:0.05em;
+  margin:6px 0 8px;
+}
+
+.coll-item{
+  display:flex;align-items:center;gap:12px;
+  background:var(--bg-card);
+  border-radius:var(--r-lg);
+  padding:12px;
+  margin-bottom:8px;
+  cursor:pointer;
+  transition:opacity 0.15s;
+  position:relative;
+}
+.coll-item:hover{opacity:0.85}
+.coll-item::after{
+  content:'›';
+  position:absolute;right:14px;
+  font-size:20px;color:var(--muted);font-weight:300;
+}
+.ci-thumb{
+  width:50px;height:50px;border-radius:50%;
+  background:var(--bg-input);
+  display:flex;align-items:center;justify-content:center;
+  font-size:26px;flex-shrink:0;
+  overflow:hidden;border:2px solid var(--sep);
+}
+.ci-thumb img{width:100%;height:100%;object-fit:cover;border-radius:50%}
+.ci-info{flex:1;min-width:0;padding-right:24px}
+.ci-name{font-size:15px;font-weight:600;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--text)}
+.ci-meta{font-size:13px;color:var(--muted);margin-bottom:4px}
+.ci-grade-tag{
+  display:inline-block;
+  font-size:11px;font-weight:700;
+  padding:2px 8px;border-radius:6px;
+  background:rgba(94,92,230,0.12);color:var(--purple);
+}
+.ci-value-col{text-align:right;flex-shrink:0;padding-right:20px}
+.ci-val{font-size:17px;font-weight:800;color:var(--text)}
+.ci-val-lbl{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.05em}
+
+.coll-empty{
+  flex:1;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  gap:12px;padding:40px 30px;
+  text-align:center;
+}
+.ce-icon{font-size:52px;opacity:0.25}
+.ce-title{font-size:20px;font-weight:700;color:var(--text)}
+.ce-sub{font-size:15px;color:var(--muted);line-height:1.5}
+.ce-btn{
+  margin-top:8px;
+  padding:12px 28px;
+  background:var(--purple);
+  border:none;border-radius:var(--r-lg);
+  color:#fff;font-family:var(--font);font-size:15px;font-weight:700;
+  cursor:pointer;
+}
+
+/* ── DISCOVER SCREEN ── */
+.search-wrap{
+  padding:0 16px 14px;
+  flex-shrink:0;
+}
+.search-field{
+  display:flex;align-items:center;gap:10px;
+  background:var(--bg-input);
+  border-radius:10px;
+  padding:9px 14px;
+}
+.search-field input{
+  flex:1;background:none;border:none;outline:none;
+  font-family:var(--font);font-size:15px;color:var(--text);
+}
+.search-field input::placeholder{color:var(--muted)}
+.search-field-icon{color:var(--muted);font-size:15px}
+
+.disc-scroll{flex:1;overflow-y:auto;padding:0 16px 8px;scrollbar-width:none}
+.disc-scroll::-webkit-scrollbar{display:none}
+.disc-sec-title{
+  font-size:20px;font-weight:800;
+  letter-spacing:-0.3px;
+  margin:4px 0 12px;color:var(--text);
+}
+.disc-hscroll{
+  display:flex;gap:10px;
+  overflow-x:auto;padding-bottom:4px;
+  margin-bottom:20px;
+  scrollbar-width:none;
+}
+.disc-hscroll::-webkit-scrollbar{display:none}
+.disc-card{
+  flex-shrink:0;width:145px;
+  background:var(--bg-card);
+  border-radius:var(--r-lg);
+  overflow:hidden;cursor:pointer;
+  transition:opacity 0.15s;
+}
+.disc-card:hover{opacity:0.8}
+.dc-img2{
+  width:100%;height:86px;
+  background:linear-gradient(135deg,#1a1a2e,#0f3460);
+  display:flex;align-items:center;justify-content:center;
+  font-size:38px;
+}
+.dc-body2{padding:8px 10px 10px}
+.dc-name2{font-size:13px;font-weight:700;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--text)}
+.dc-sub2{font-size:11px;color:var(--muted)}
+.dc-price2{font-size:13px;font-weight:700;color:var(--green);margin-top:4px}
+
+/* ── PROFILE SCREEN ── */
+.prof-scroll{flex:1;overflow-y:auto;padding:0 16px 16px;scrollbar-width:none}
+.prof-scroll::-webkit-scrollbar{display:none}
+
+.prof-hero{
+  display:flex;align-items:center;gap:14px;
+  background:var(--bg-card);
+  border-radius:var(--r-xl);
+  padding:16px;
+  margin-bottom:12px;
+}
+.prof-avatar{
+  width:60px;height:60px;border-radius:50%;
+  background:linear-gradient(135deg,var(--purple),var(--purple-l));
+  display:flex;align-items:center;justify-content:center;
+  font-size:26px;flex-shrink:0;
+}
+.prof-name{font-size:18px;font-weight:800;margin-bottom:2px;letter-spacing:-0.2px}
+.prof-sub{font-size:13px;color:var(--muted)}
+.prof-badge{
+  margin-left:auto;
+  padding:5px 14px;
+  border-radius:20px;
+  background:var(--green);
+  color:#fff;
+  font-size:13px;font-weight:700;
+  flex-shrink:0;
+}
+
+.prof-stats{
+  display:flex;gap:0;
+  background:var(--bg-card);
+  border-radius:var(--r-xl);
+  overflow:hidden;
+  margin-bottom:12px;
+}
+.pstat{flex:1;padding:14px 8px;text-align:center}
+.pstat+.pstat{border-left:1px solid var(--sep)}
+.pstat-num{font-size:22px;font-weight:900;color:var(--purple);margin-bottom:2px;letter-spacing:-0.3px}
+.pstat-lbl{font-size:11px;font-weight:500;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em}
+
+/* All free banner */
+.free-banner{
+  background:linear-gradient(135deg,rgba(52,199,89,0.12),rgba(52,199,89,0.05));
+  border:1px solid rgba(52,199,89,0.25);
+  border-radius:var(--r-xl);
+  padding:16px;
+  margin-bottom:12px;
+}
+.fb-title{font-size:17px;font-weight:800;color:var(--green);margin-bottom:4px}
+.fb-sub{font-size:13px;color:var(--muted);line-height:1.5;margin-bottom:12px}
+.fb-items{display:flex;flex-direction:column;gap:6px;margin-bottom:14px}
+.fb-item{display:flex;align-items:center;gap:9px;font-size:14px;font-weight:500;color:var(--text)}
+.fb-check{color:var(--green);font-size:14px;flex-shrink:0}
+.fb-cta{
+  background:rgba(52,199,89,0.12);
+  border:1px solid rgba(52,199,89,0.25);
+  border-radius:10px;
+  padding:11px;
+  text-align:center;
+  font-size:14px;font-weight:700;color:var(--green);
+}
+
+/* Settings */
+.settings-group{
+  background:var(--bg-card);
+  border-radius:var(--r-xl);
+  overflow:hidden;
+  margin-bottom:12px;
+}
+.sg-item{
+  display:flex;align-items:center;gap:12px;
+  padding:13px 16px;
+  cursor:pointer;
+  transition:opacity 0.15s;
+  min-height:44px;
+}
+.sg-item:hover{opacity:0.75}
+.sg-item+.sg-item{border-top:1px solid var(--sep)}
+.sg-icon{
+  width:30px;height:30px;border-radius:7px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:15px;flex-shrink:0;
+}
+.sg-text{flex:1}
+.sg-title{font-size:15px;font-weight:400;color:var(--text)}
+.sg-sub{font-size:12px;color:var(--muted);margin-top:1px}
+.sg-arrow{color:var(--muted);font-size:18px;font-weight:300}
+.sg-toggle{
+  width:51px;height:31px;border-radius:16px;
+  background:var(--green);
+  position:relative;cursor:pointer;
+  transition:background 0.2s;flex-shrink:0;
+  border:none;
+}
+.sg-toggle::after{
+  content:'';
+  position:absolute;top:2px;right:2px;
+  width:27px;height:27px;border-radius:50%;
+  background:#fff;
+  box-shadow:0 2px 6px rgba(0,0,0,0.3);
+  transition:transform 0.2s;
+}
+.sg-toggle.off{background:var(--bg-input)}
+.sg-toggle.off::after{transform:translateX(-20px)}
+
+/* Geo map */
+.geo-card{
+  background:var(--bg-card);
+  border-radius:var(--r-xl);
+  padding:16px;
+  margin-bottom:12px;
+}
+.geo-card-title{font-size:17px;font-weight:700;margin-bottom:10px}
+.geo-svg-wrap{width:100%;border-radius:var(--r);overflow:hidden;background:var(--bg-input);margin-bottom:10px}
+.geo-tags{display:flex;flex-wrap:wrap;gap:6px}
+.geo-tag{
+  font-size:12px;font-weight:600;
+  padding:4px 10px;border-radius:8px;
+  background:rgba(94,92,230,0.1);
+  color:var(--purple);
+}
+
+/* Export row */
+.export-row{
+  display:flex;gap:10px;margin-bottom:12px;
+}
+.export-btn{
+  flex:1;padding:13px;
+  background:var(--bg-card);
+  border:none;border-radius:var(--r-lg);
+  font-family:var(--font);font-size:14px;font-weight:600;
+  color:var(--blue);
+  cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px;
+  transition:opacity 0.15s;
+}
+.export-btn:hover{opacity:0.75}
+
+/* ── BOTTOM TAB BAR ── */
+.tab-bar{
+  display:flex;
+  background:var(--nav-bg);
+  border-top:1px solid var(--sep);
+  backdrop-filter:blur(20px);
+  -webkit-backdrop-filter:blur(20px);
+  padding:8px 0 max(16px,env(safe-area-inset-bottom));
+  flex-shrink:0;
+}
+.tb-item{
+  flex:1;
+  display:flex;flex-direction:column;align-items:center;gap:3px;
+  cursor:pointer;padding:2px 0;
+  transition:opacity 0.15s;
+}
+.tb-item:hover{opacity:0.7}
+.tb-icon{
+  position:relative;
+  width:28px;height:28px;
+  display:flex;align-items:center;justify-content:center;
+}
+.tb-icon svg,.tb-icon span{
+  transition:all 0.2s;
+}
+.tb-label{
+  font-size:10px;font-weight:500;
+  color:var(--muted);
+  letter-spacing:0.02em;
+}
+.tb-item.active .tb-label{color:var(--purple)}
+.tb-item.active .tb-icon svg{color:var(--purple)}
+.tb-item.active .tb-icon span{filter:none}
+.tb-icon span{font-size:24px;filter:grayscale(1) opacity(0.5)}
+.tb-item.active .tb-icon span{filter:none}
+.tb-badge{
+  position:absolute;top:-4px;right:-6px;
+  min-width:16px;height:16px;border-radius:8px;
+  background:var(--red);color:#fff;
+  font-size:10px;font-weight:800;
+  display:none;align-items:center;justify-content:center;
+  padding:0 4px;
+}
+.tb-badge.show{display:flex}
+
+/* ── LOADING ── */
+.loading-screen{
+  position:absolute;inset:0;z-index:50;
+  background:rgba(0,0,0,0.75);
+  backdrop-filter:blur(8px);
+  display:none;flex-direction:column;
+  align-items:center;justify-content:center;gap:18px;
+}
+.loading-screen.show{display:flex}
+.loading-coin{
+  width:80px;height:80px;border-radius:50%;
+  background:conic-gradient(var(--purple) 0deg, var(--purple-l) 120deg, var(--gold) 240deg, var(--purple) 360deg);
+  animation:lspin 1s linear infinite;
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:0 0 30px rgba(94,92,230,0.5);
+}
+.loading-coin::after{
+  content:'🔍';
+  font-size:30px;
+  width:60px;height:60px;border-radius:50%;
+  background:var(--bg);
+  display:flex;align-items:center;justify-content:center;
+}
+@keyframes lspin{to{transform:rotate(360deg)}}
+.loading-title{font-size:20px;font-weight:800;color:#fff;text-align:center}
+.loading-sub{font-size:14px;color:rgba(255,255,255,0.6);text-align:center;max-width:240px;line-height:1.5}
+.loading-bar{width:200px;height:4px;background:rgba(255,255,255,0.15);border-radius:2px;overflow:hidden}
+.loading-bar-fill{height:100%;background:linear-gradient(90deg,var(--purple),var(--gold));border-radius:2px;animation:lbar 2.2s ease-in-out infinite}
+@keyframes lbar{0%{width:0;margin-left:0}60%{width:65%}100%{width:0;margin-left:100%}}
+
+/* ── TOAST ── */
+.toast{
+  position:absolute;
+  bottom:calc(var(--nav-h) + 10px);
+  left:20px;right:20px;
+  background:rgba(50,50,55,0.95);
+  backdrop-filter:blur(12px);
+  border-radius:14px;
+  padding:13px 18px;
+  font-size:14px;font-weight:600;color:#fff;
+  text-align:center;
+  transform:translateY(12px);opacity:0;
+  transition:all 0.28s cubic-bezier(0.34,1.56,0.64,1);
+  pointer-events:none;z-index:40;
+}
+.toast.show{transform:translateY(0);opacity:1}
+
+/* ── DESKTOP FRAME ── */
+@media(min-width:600px){
+  body{background:#111;display:flex;align-items:center;justify-content:center}
+  .shell{
+    height:calc(100vh - 40px);
+    max-height:852px;
+    border-radius:50px;
+    border:10px solid #222;
+    box-shadow:0 0 0 1px #333,0 40px 80px rgba(0,0,0,0.8);
+    margin:20px auto;
+  }
+  .status-bar{padding-top:18px}
+}
+@media(max-width:390px){
+  .vf-container{max-width:100%}
+  .coin-hero-img{height:180px}
+}
+</style>
+</head>
+<body>
+<input type="file" id="fileInput" accept="image/*" style="display:none">
+
+<div class="shell">
+
+  <!-- Status Bar -->
+  <div class="status-bar">
+    <span class="sb-time" id="sbTime">9:41</span>
+    <div class="sb-icons">
+      <!-- Signal -->
+      <svg width="17" height="12" viewBox="0 0 17 12" fill="currentColor" class="sb-icon">
+        <rect x="0" y="4" width="3" height="8" rx="1"/>
+        <rect x="4.5" y="2.5" width="3" height="9.5" rx="1"/>
+        <rect x="9" y="0.5" width="3" height="11.5" rx="1"/>
+                <rect x="13.5" y="0" width="3" height="12" rx="1" opacity="0.3"/>
+      </svg>
+      <!-- WiFi -->
+      <svg width="16" height="12" viewBox="0 0 24 18" fill="currentColor" class="sb-icon">
+        <path d="M12 13.5a2.5 2.5 0 1 1 0 5 2.5 2.5 0 0 1 0-5z"/>
+        <path d="M12 8C15.9 8 19.4 9.6 22 12.2l1.5-1.5A14.5 14.5 0 0 0 12 6 14.5 14.5 0 0 0 .5 10.7L2 12.2A12 12 0 0 1 12 8z" opacity="0.5"/>
+        <path d="M12 3C17.2 3 21.9 5.2 25.2 8.8l1.5-1.5A19 19 0 0 0 12 1 19 19 0 0 0 -.7 7.3l1.5 1.5A16.5 16.5 0 0 1 12 3z" opacity="0.25"/>
+        <path d="M12 13a5 5 0 0 1 3.9 1.9l1.5-1.4A7.4 7.4 0 0 0 12 11a7.4 7.4 0 0 0-5.4 2.5l1.5 1.4A5 5 0 0 1 12 13z"/>
+      </svg>
+      <!-- Battery -->
+      <svg width="25" height="12" viewBox="0 0 25 12" fill="currentColor" class="sb-icon">
+        <rect x="0.5" y="0.5" width="21" height="11" rx="3.5" stroke="currentColor" stroke-width="1" fill="none" opacity="0.35"/>
+        <rect x="22" y="4" width="2.5" height="4" rx="1" opacity="0.4"/>
+        <rect x="2" y="2" width="16" height="8" rx="2"/>
+      </svg>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════
+       SCAN SCREEN
+  ════════════════════════════════ -->
+  <div class="screen active" id="screen-scan">
+    <div class="nav-bar">
+      <div>
+        <div class="nav-title">CoinSnap</div>
+        <div class="nav-subtitle">AI Coin Identifier</div>
+      </div>
+      <button class="nav-btn" onclick="showToast('Settings')">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      </button>
+    </div>
+
+    <div class="scan-body">
+      <!-- Viewfinder -->
+      <div class="vf-container" id="vfContainer" onclick="triggerUpload()">
+        <div class="vf-camera-bg"></div>
+        <img class="vf-img" id="vfImg" alt="">
+        <div class="vf-overlay">
+          <div class="vf-hint-text" id="vfHint">Position coin within the circle</div>
+          <div class="vf-target">
+            <div class="vf-arc" id="vfArc"></div>
+            <div class="vf-target-inner" id="vfTargetInner">🪙</div>
+          </div>
+        </div>
+        <div class="vf-badge" id="vfBadge">
+          <div class="vf-badge-val" id="vfBadgeVal">$0</div>
+          <div class="vf-badge-lbl">Est. Value</div>
+        </div>
+      </div>
+
+      <!-- Quick stats strip -->
+      <div class="scan-stats">
+        <div class="ss-item ss-grade">
+          <div class="ss-val" id="ssGrade">—</div>
+          <div class="ss-lbl">Grade</div>
+        </div>
+        <div class="ss-item ss-rarity">
+          <div class="ss-val" id="ssRarity">—</div>
+          <div class="ss-lbl">Rarity</div>
+        </div>
+        <div class="ss-item ss-value">
+          <div class="ss-val" id="ssValue">—</div>
+          <div class="ss-lbl">Value</div>
+        </div>
+      </div>
+
+      <!-- Buttons -->
+      <div class="scan-actions">
+        <button class="btn-primary" id="identifyBtn" onclick="runAnalysis()">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          Identify Coin
+        </button>
+        <div class="btn-row">
+          <button class="btn-sec" onclick="triggerUpload()">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+            Upload Photo
+          </button>
+          <button class="btn-sec" onclick="clearScan()">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.59"/></svg>
+            Clear
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════
+       RESULT SCREEN
+  ════════════════════════════════ -->
+  <div class="screen" id="screen-result">
+    <div class="result-nav">
+      <button class="back-btn" onclick="goBack()">
+        <svg width="10" height="18" viewBox="0 0 10 18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 1 1 9 9 17"/></svg>
+        Back
+      </button>
+      <span class="result-nav-title">Coin Details</span>
+      <div style="display:flex;gap:8px;align-items:center">
+        <button class="nav-btn-sm" onclick="exportReport()" title="Export">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        </button>
+        <button class="save-btn" id="saveBtn" onclick="saveCoin()">Save</button>
+      </div>
+    </div>
+
+    <div class="result-scroll" id="resultScroll">
+
+      <!-- Hero image -->
+      <div class="coin-hero-img" id="heroImgWrap">
+        <img id="heroImg" alt="Coin">
+        <span class="chi-emoji" id="heroEmoji">🪙</span>
+        <span class="coin-badge cb-choice" id="heroBadge">Collector's Choice</span>
+      </div>
+
+      <!-- Title card -->
+      <div class="coin-title-section">
+        <div class="coin-name-row">
+          <div class="coin-name" id="coinName">Loading…</div>
+        </div>
+        <div class="coin-origin" id="coinOrigin">Analyzing…</div>
+
+        <!-- Rarity meter -->
+        <div class="rarity-section">
+          <div class="rarity-header">
+            <span class="rarity-header-lbl">Rarity Level</span>
+            <span class="rarity-header-val" id="rarityLabel" style="color:var(--gold)">—</span>
+          </div>
+          <div class="rarity-track">
+            <div class="rarity-fill" id="rarityFill" style="width:50%;background:var(--gold)"></div>
+          </div>
+        </div>
+
+        <!-- Value blocks -->
+        <div class="value-blocks">
+          <div class="vb vb-col">
+            <div class="vb-num" id="collVal">—</div>
+            <div class="vb-lbl">Collector Value</div>
+          </div>
+          <div class="vb vb-melt">
+            <div class="vb-num" id="meltVal">—</div>
+            <div class="vb-lbl">Melt Value</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Segmented tabs -->
+      <div class="seg-control" id="segControl">
+        <div class="seg-item active" onclick="switchTab('overview',this)">Overview</div>
+        <div class="seg-item" onclick="switchTab('grading',this)">Grading</div>
+        <div class="seg-item" onclick="switchTab('errors',this)">Errors</div>
+        <div class="seg-item" onclick="switchTab('auth',this)">Auth</div>
+      </div>
+
+      <!-- OVERVIEW TAB -->
+      <div class="tab-panel active" id="tab-overview">
+        <div class="ios-group-label">Coin Details</div>
+        <div class="ios-group" id="detailsGroup"></div>
+        <div class="ios-group-label">About This Coin</div>
+        <div class="ios-group">
+          <div style="padding:14px 16px;font-size:15px;color:var(--text2);line-height:1.65" id="coinHistory">—</div>
+        </div>
+      </div>
+
+      <!-- GRADING TAB -->
+      <div class="tab-panel" id="tab-grading">
+        <!-- Grade hero -->
+        <div class="grade-hero">
+          <div class="grade-ring" id="gradeRing">
+            <svg viewBox="0 0 72 72" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="36" cy="36" r="32" stroke="var(--bg-input)" stroke-width="6"/>
+              <circle cx="36" cy="36" r="32" stroke="var(--purple)" stroke-width="6"
+                stroke-linecap="round"
+                stroke-dasharray="201"
+                stroke-dashoffset="60"
+                transform="rotate(-90 36 36)"
+                id="gradeArc"/>
+            </svg>
+            <div class="grade-ring-inner">
+              <div class="grade-num" id="gradeNum">—</div>
+              <div class="grade-sub-lbl">/ 70</div>
+            </div>
+          </div>
+          <div class="grade-info">
+            <div class="grade-label" id="gradeLabel">—</div>
+            <div class="grade-desc-text" id="gradeDescText">—</div>
+          </div>
+        </div>
+
+        <!-- Surface analysis -->
+        <div class="ios-group-label">Surface Analysis</div>
+        <div class="ios-group" id="surfaceGroup"></div>
+
+        <!-- Grade price table -->
+        <div class="ios-group-label">Value by Grade</div>
+        <div class="ios-group">
+          <table class="grade-price-table gpt" id="gradeTable" style="width:100%"></table>
+        </div>
+      </div>
+
+      <!-- ERRORS TAB -->
+      <div class="tab-panel" id="tab-errors">
+        <div style="font-size:13px;color:var(--muted);line-height:1.55;padding:2px 4px 10px;font-weight:500" id="errorIntroText">—</div>
+        <div id="errorSummaryWrap"></div>
+        <div id="errorCardsWrap"></div>
+      </div>
+
+      <!-- AUTH TAB -->
+      <div class="tab-panel" id="tab-auth">
+        <div class="auth-verdict-card" id="authVerdictCard">
+          <div class="auth-icon-wrap avc-genuine" id="authIconWrap">✅</div>
+          <div class="auth-verdict-text">
+            <div class="avt-title" id="authVerdictTitle">Appears Genuine</div>
+            <div class="avt-conf" id="authConfText">High confidence</div>
+          </div>
+          <div class="auth-pct" id="authPctNum" style="color:var(--green)">96%</div>
+        </div>
+
+        <div class="ios-group-label">Authentication Details</div>
+        <div class="ios-group" id="authDetailsGroup"></div>
+
+        <div class="ios-group-label">AI Observations</div>
+        <div class="ios-group">
+          <div style="padding:14px 16px;font-size:14px;color:var(--text2);line-height:1.65" id="authNotesText">—</div>
+        </div>
+
+        <div class="ios-group-label">Submission Advice</div>
+        <div class="ios-group">
+          <div style="padding:14px 16px;font-size:14px;color:var(--text2);line-height:1.65" id="authSubmissionText">—</div>
+        </div>
+
+        <div class="ios-group-label">Melt Value Breakdown</div>
+        <div class="ios-group" id="meltGroup">
+          <div class="ios-row"><span class="ios-row-key">Metal</span><span class="ios-row-val bold" id="meltMetal">—</span></div>
+          <div class="ios-row"><span class="ios-row-key">Purity</span><span class="ios-row-val" id="meltPurity">—</span></div>
+          <div class="ios-row"><span class="ios-row-key">Metal Weight</span><span class="ios-row-val" id="meltWeight">—</span></div>
+          <div class="ios-row"><span class="ios-row-key">Spot Price</span><span class="ios-row-val" id="meltSpot">—</span></div>
+          <div class="melt-total-row">
+            <span class="melt-total-lbl">Melt Value</span>
+            <span class="melt-total-val" id="meltTotal">—</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════
+       COLLECTION SCREEN
+  ════════════════════════════════ -->
+  <div class="screen" id="screen-collection">
+    <div class="nav-bar">
+      <div>
+        <div class="nav-title">Collection</div>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button class="nav-btn" onclick="exportCSV()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        </button>
+        <button class="nav-btn" style="background:var(--purple);color:#fff" onclick="navTo('scan')">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Value summary card -->
+    <div class="coll-summary-card">
+      <div class="csc-bg-circle"></div>
+      <div class="csc-label">Total Collection Value</div>
+      <div class="csc-total" id="collTotalVal">$0.00</div>
+      <div class="csc-metals" id="collMetals">
+        <div class="metal-chip"><div class="metal-chip-dot" style="background:#FFD700"></div>Gold: $0</div>
+        <div class="metal-chip"><div class="metal-chip-dot" style="background:#C0C0C0"></div>Silver: $0</div>
+      </div>
+    </div>
+
+    <!-- Empty state / list -->
+    <div class="coll-scroll" id="collScroll">
+      <div class="coll-empty" id="collEmpty">
+        <div class="ce-icon">🪙</div>
+        <div class="ce-title">No coins yet</div>
+        <div class="ce-sub">Scan your first coin to start building your collection</div>
+        <button class="ce-btn" onclick="navTo('scan')">Scan a Coin</button>
+      </div>
+      <div id="collList"></div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════
+       DISCOVER SCREEN
+  ════════════════════════════════ -->
+  <div class="screen" id="screen-discover">
+    <div class="nav-bar">
+      <div class="nav-title">Discover</div>
+    </div>
+    <div class="search-wrap">
+      <div class="search-field">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" class="search-field-icon"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="text" placeholder="Search coins, years, countries…">
+      </div>
+    </div>
+    <div class="disc-scroll">
+      <div class="disc-sec-title">Trending Coins</div>
+      <div class="disc-hscroll">
+        <div class="disc-card"><div class="dc-img2">🦅</div><div class="dc-body2"><div class="dc-name2">Morgan Dollar</div><div class="dc-sub2">USA · 1878–1921</div><div class="dc-price2">From $30</div></div></div>
+        <div class="disc-card"><div class="dc-img2">🌾</div><div class="dc-body2"><div class="dc-name2">Wheat Cent</div><div class="dc-sub2">USA · 1909–1958</div><div class="dc-price2">From $0.10</div></div></div>
+        <div class="disc-card"><div class="dc-img2">🦬</div><div class="dc-body2"><div class="dc-name2">Buffalo Nickel</div><div class="dc-sub2">USA · 1913–1938</div><div class="dc-price2">From $1.50</div></div></div>
+        <div class="disc-card"><div class="dc-img2">🕊️</div><div class="dc-body2"><div class="dc-name2">Peace Dollar</div><div class="dc-sub2">USA · 1921–1935</div><div class="dc-price2">From $25</div></div></div>
+        <div class="disc-card"><div class="dc-img2">🚶</div><div class="dc-body2"><div class="dc-name2">Walking Liberty</div><div class="dc-sub2">USA · 1916–1947</div><div class="dc-price2">From $18</div></div></div>
+      </div>
+      <div class="disc-sec-title">World Coins</div>
+      <div class="disc-hscroll">
+        <div class="disc-card"><div class="dc-img2">👑</div><div class="dc-body2"><div class="dc-name2">Gold Sovereign</div><div class="dc-sub2">UK · Gold</div><div class="dc-price2">From $480</div></div></div>
+        <div class="disc-card"><div class="dc-img2">🍁</div><div class="dc-body2"><div class="dc-name2">Maple Leaf</div><div class="dc-sub2">Canada · Silver</div><div class="dc-price2">From $30</div></div></div>
+        <div class="disc-card"><div class="dc-img2">🦘</div><div class="dc-body2"><div class="dc-name2">Kangaroo</div><div class="dc-sub2">Australia · Silver</div><div class="dc-price2">From $28</div></div></div>
+        <div class="disc-card"><div class="dc-img2">🌅</div><div class="dc-body2"><div class="dc-name2">Krugerrand</div><div class="dc-sub2">South Africa · Gold</div><div class="dc-price2">From $1,900</div></div></div>
+      </div>
+      <div class="disc-sec-title">Error Coin Guide</div>
+      <div class="disc-hscroll">
+        <div class="disc-card"><div class="dc-img2">👁️</div><div class="dc-body2"><div class="dc-name2">Double Die</div><div class="dc-sub2">DDO / DDR errors</div><div class="dc-price2">Up to 100× value</div></div></div>
+        <div class="disc-card"><div class="dc-img2">⚡</div><div class="dc-body2"><div class="dc-name2">Off-Center</div><div class="dc-sub2">Misaligned dies</div><div class="dc-price2">Up to 50× value</div></div></div>
+        <div class="disc-card"><div class="dc-img2">🔄</div><div class="dc-body2"><div class="dc-name2">Brockage</div><div class="dc-sub2">Mirror image error</div><div class="dc-price2">Rare</div></div></div>
+        <div class="disc-card"><div class="dc-img2">✂️</div><div class="dc-body2"><div class="dc-name2">Clipped Planchet</div><div class="dc-sub2">Missing metal</div><div class="dc-price2">$15–$200+</div></div></div>
+      </div>
+      <div style="height:8px"></div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════
+       PROFILE SCREEN
+  ════════════════════════════════ -->
+  <div class="screen" id="screen-profile">
+    <div class="nav-bar"><div class="nav-title">Profile</div></div>
+    <div class="prof-scroll">
+
+      <!-- Profile hero -->
+      <div class="prof-hero">
+        <div class="prof-avatar">👤</div>
+        <div>
+          <div class="prof-name">Coin Collector</div>
+          <div class="prof-sub">Member since 2024</div>
+        </div>
+        <div class="prof-badge">FREE ✓</div>
+      </div>
+
+      <!-- Stats -->
+      <div class="prof-stats">
+        <div class="pstat"><div class="pstat-num" id="psScanned">0</div><div class="pstat-lbl">Scanned</div></div>
+        <div class="pstat"><div class="pstat-num" id="psSaved">0</div><div class="pstat-lbl">Saved</div></div>
+        <div class="pstat"><div class="pstat-num" id="psCountries">0</div><div class="pstat-lbl">Countries</div></div>
+        <div class="pstat"><div class="pstat-num" id="psValue">$0</div><div class="pstat-lbl">Value</div></div>
+      </div>
+
+      <!-- All free banner -->
+      <div class="free-banner">
+        <div class="fb-title">✅ All Features Free</div>
+        <div class="fb-sub">Every premium feature is fully unlocked. No subscriptions, no limits.</div>
+        <div class="fb-items">
+          <div class="fb-item"><span class="fb-check">✓</span>Unlimited coin identifications</div>
+          <div class="fb-item"><span class="fb-check">✓</span>Professional grading (Sheldon MS-65)</div>
+          <div class="fb-item"><span class="fb-check">✓</span>Error &amp; variety auto-detection</div>
+          <div class="fb-item"><span class="fb-check">✓</span>Real-time market prices</div>
+          <div class="fb-item"><span class="fb-check">✓</span>Melt value (Gold, Silver, Platinum)</div>
+          <div class="fb-item"><span class="fb-check">✓</span>Unlimited collection storage</div>
+          <div class="fb-item"><span class="fb-check">✓</span>CSV export &amp; detailed reports</div>
+          <div class="fb-item"><span class="fb-check">✓</span>Geographic collection map</div>
+          <div class="fb-item"><span class="fb-check">✓</span>Authenticity &amp; counterfeit check</div>
+        </div>
+        <div class="fb-cta">🎉 Powered by Claude Vision · 100% Free Forever</div>
+      </div>
+
+      <!-- Geo map -->
+      <div class="geo-card">
+        <div class="geo-card-title">🗺️ Geographic Distribution</div>
+        <div class="geo-svg-wrap">
+          <svg id="worldMap" viewBox="0 0 360 180" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block">
+            <rect width="360" height="180" fill="var(--bg-input)"/>
+            <path d="M45,30 L90,28 L100,35 L95,60 L85,75 L70,80 L55,70 L40,55Z" fill="var(--sep)" opacity="0.6" style="fill:var(--muted);opacity:0.18"/>
+            <path d="M75,90 L95,85 L105,100 L100,130 L85,145 L70,135 L65,115Z" fill="var(--muted)" opacity="0.18"/>
+            <path d="M155,25 L185,22 L192,35 L180,50 L162,52 L150,42Z" fill="var(--muted)" opacity="0.18"/>
+            <path d="M155,58 L185,55 L195,80 L185,115 L165,125 L148,110 L145,80Z" fill="var(--muted)" opacity="0.18"/>
+            <path d="M190,18 L270,15 L285,35 L280,65 L255,75 L220,70 L195,55 L185,35Z" fill="var(--muted)" opacity="0.18"/>
+            <path d="M255,105 L285,100 L295,115 L280,130 L260,128 L248,118Z" fill="var(--muted)" opacity="0.18"/>
+            <g id="mapDots"></g>
+          </svg>
+        </div>
+        <div style="font-size:12px;color:var(--muted);margin-bottom:8px;font-weight:500">
+          <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--purple);margin-right:5px;vertical-align:middle"></span>
+          Coins in your collection
+        </div>
+        <div class="geo-tags" id="geoTags"><span style="font-size:13px;color:var(--muted)">Scan coins to build your map</span></div>
+      </div>
+
+      <!-- Export -->
+      <div class="export-row">
+        <button class="export-btn" onclick="exportCSV()">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          Export CSV
+        </button>
+        <button class="export-btn" onclick="exportReport()">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+          Report
+        </button>
+      </div>
+
+      <!-- Settings -->
+      <div class="ios-group-label">Settings</div>
+      <div class="settings-group">
+        <div class="sg-item">
+          <div class="sg-icon" style="background:#5E5CE6">🔔</div>
+          <div class="sg-text"><div class="sg-title">Notifications</div></div>
+          <button class="sg-toggle" onclick="this.classList.toggle('off')"></button>
+        </div>
+        <div class="sg-item">
+          <div class="sg-icon" style="background:#FF9500">🔊</div>
+          <div class="sg-text"><div class="sg-title">Scan Sound</div></div>
+          <button class="sg-toggle" onclick="this.classList.toggle('off')"></button>
+        </div>
+        <div class="sg-item">
+          <div class="sg-icon" style="background:#34C759">📖</div>
+          <div class="sg-text"><div class="sg-title">Coin Encyclopedia</div><div class="sg-sub">300,000+ coin database</div></div>
+          <span class="sg-arrow">›</span>
+        </div>
+        <div class="sg-item" onclick="showToast('Help & Support coming soon')">
+          <div class="sg-icon" style="background:#FF3B30">❓</div>
+          <div class="sg-text"><div class="sg-title">Help &amp; Support</div></div>
+          <span class="sg-arrow">›</span>
+        </div>
+      </div>
+      <div style="font-size:12px;color:var(--muted);text-align:center;padding:8px 0 16px">CoinSnap v2.0 · Powered by Claude Vision · © 2026 Next Vision Limited</div>
+    </div>
+  </div>
+
+  <!-- Loading overlay -->
+  <div class="loading-screen" id="loadingScreen">
+    <div class="loading-coin"></div>
+    <div class="loading-title" id="loadingTitle">Identifying coin…</div>
+    <div class="loading-sub" id="loadingSub">Matching against 300,000+ coin database</div>
+    <div class="loading-bar"><div class="loading-bar-fill"></div></div>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast"></div>
+
+  <!-- Bottom tab bar -->
+  <div class="tab-bar">
+    <div class="tb-item active" id="tb-scan" onclick="navTo('scan')">
+      <div class="tb-icon">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3"/><line x1="12" y1="3" x2="12" y2="6"/><line x1="12" y1="18" x2="12" y2="21"/><line x1="3" y1="12" x2="6" y2="12"/><line x1="18" y1="12" x2="21" y2="12"/></svg>
+      </div>
+      <div class="tb-label">Scan</div>
+    </div>
+    <div class="tb-item" id="tb-collection" onclick="navTo('collection')">
+      <div class="tb-icon">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-4 0v2"/><path d="M8 7V5a2 2 0 0 0-4 0v2"/></svg>
+        <span class="tb-badge" id="tbBadge"></span>
+      </div>
+      <div class="tb-label">Collection</div>
+    </div>
+    <div class="tb-item" id="tb-discover" onclick="navTo('discover')">
+      <div class="tb-icon">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/></svg>
+      </div>
+      <div class="tb-label">Discover</div>
+    </div>
+    <div class="tb-item" id="tb-profile" onclick="navTo('profile')">
+      <div class="tb-icon">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      </div>
+      <div class="tb-label">Profile</div>
+    </div>
+  </div>
+
+</div><!-- /shell -->
+
+
+<script>
+// ── State ──
+let uploadedB64=null, uploadedMime=null, uploadedDataUrl=null;
+let currentResult=null;
+const collection=[];
+let scannedCount=0;
+
+// ── Time ──
+function updateTime(){
+  const n=new Date();
+  document.getElementById('sbTime').textContent=n.getHours()+':'+(n.getMinutes()+'').padStart(2,'0');
+}
+updateTime(); setInterval(updateTime,15000);
+
+// ── Navigation ──
+function navTo(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.tb-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('screen-'+id).classList.add('active');
+  document.getElementById('tb-'+id).classList.add('active');
+}
+function showResult(){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.tb-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('screen-result').classList.add('active');
+  document.getElementById('tb-scan').classList.add('active');
+  document.getElementById('resultScroll').scrollTop=0;
+}
+function goBack(){navTo('scan')}
+
+// ── Tab switching ──
+function switchTab(name,el){
+  const tabs=(el||event.currentTarget).closest('.seg-control');
+  tabs.querySelectorAll('.seg-item').forEach(t=>t.classList.remove('active'));
+  (el||event.currentTarget).classList.add('active');
+  document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById('tab-'+name).classList.add('active');
+}
+
+// ── File upload ──
+document.getElementById('fileInput').addEventListener('change',e=>{
+  const f=e.target.files[0]; if(!f)return;
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    uploadedDataUrl=ev.target.result;
+    uploadedB64=ev.target.result.split(',')[1];
+    uploadedMime=f.type||'image/jpeg';
+    const img=document.getElementById('vfImg');
+    img.src=uploadedDataUrl; img.classList.add('show');
+    document.querySelector('.vf-overlay').style.display='none';
+  };
+  reader.readAsDataURL(f);
+  e.target.value='';
+});
+function triggerUpload(){document.getElementById('fileInput').click()}
+function clearScan(){
+  uploadedB64=null; uploadedMime=null; uploadedDataUrl=null;
+  const img=document.getElementById('vfImg');
+  img.src=''; img.classList.remove('show');
+  document.querySelector('.vf-overlay').style.display='';
+  document.getElementById('vfBadge').classList.remove('show');
+  ['ssGrade','ssRarity','ssValue'].forEach(id=>document.getElementById(id).textContent='—');
+}
+
+// ── Loading steps ──
+const loadSteps=[
+  ['Detecting coin type…','Matching shape and design features'],
+  ['Reading date and mint mark…','Identifying year and mint'],
+  ['Checking 300,000+ database…','Finding exact match'],
+  ['Grading surface condition…','Assessing wear and luster'],
+  ['Scanning for errors & varieties…','Die errors, RPMs, VAMs'],
+  ['Calculating market value…','Current numismatic prices'],
+  ['Generating expert report…','Compiling full analysis'],
+];
+
+// ── Run AI scan ──
+async function runAnalysis(){
+  if(!uploadedB64){showToast('Upload a coin photo first'); return;}
+  const ls=document.getElementById('loadingScreen');
+  const lt=document.getElementById('loadingTitle');
+  const lsub=document.getElementById('loadingSub');
+  ls.classList.add('show');
+  let si=0;
+  const st=setInterval(()=>{si=(si+1)%loadSteps.length; lt.textContent=loadSteps[si][0]; lsub.textContent=loadSteps[si][1];},700);
+
+  try{
+    const res=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        model:'claude-sonnet-4-20250514',
+        max_tokens:2500,
+        messages:[{role:'user',content:[
+          {type:'image',source:{type:'base64',media_type:uploadedMime,data:uploadedB64}},
+          {type:'text',text:`You are a senior PCGS/NGC-certified numismatist AI. Examine this coin image with extreme care.
+
+TASK 1 — IDENTIFY & GRADE the coin (country, year, mint, denomination, Sheldon grade).
+TASK 2 — SCAN EVERY VISIBLE SURFACE for defects, errors, and varieties. Look for:
+• Die errors: doubled dies (DDO/DDR), repunched mintmarks, over-mintmarks, die cracks, die cuds, clashed dies, rotated dies
+• Planchet errors: lamination flaws, clips, wrong planchet, broadstrikes, off-metal strikes
+• Strike errors: off-center strikes, brockage, double strikes, misaligned dies
+• Post-mint damage: cleaning, polishing, whizzing, tooling, environmental damage, graffiti, rim nicks, deep scratches
+• Varieties: VAM varieties, overdates, repunched dates
+• Surface: heavy bag marks, carbon spots, PVC damage, hazing, artificial toning
+
+For EACH issue found assign a dollar impact. Positive for genuine mint errors, negative for damage.
+
+Return ONLY valid JSON, no markdown, no fences:
+{
+  "name":"1921-D Morgan Silver Dollar",
+  "subtitle":"United States · $1 · 1878–1921",
+  "badge":"Error Coin",
+  "grade":{"sheldon":58,"label":"AU-58 (About Uncirculated)","desc":"Slight wear on high points only. Nearly full luster remains with impressive eye appeal."},
+  "rarity":{"pct":68,"label":"Scarce","color":"#FF9500"},
+  "baseCollectorValue":"$85",
+  "collectorValue":"$85 – $320",
+  "meltValue":"$21.97",
+  "details":[
+    {"key":"Country","val":"United States"},
+    {"key":"Year","val":"1921"},
+    {"key":"Mint Mark","val":"Denver (D)"},
+    {"key":"Denomination","val":"$1 (One Dollar)"},
+    {"key":"Composition","val":"90% Silver, 10% Copper"},
+    {"key":"Weight","val":"26.73g"},
+    {"key":"Diameter","val":"38.1mm"},
+    {"key":"Mintage","val":"20,345,000"},
+    {"key":"Designer","val":"George T. Morgan"},
+    {"key":"Series","val":"Morgan Dollar"}
+  ],
+  "history":"2-3 sentences on this coin and why collectors value it.",
+  "surfaceScores":[
+    {"label":"Luster","score":72},
+    {"label":"Strike","score":80},
+    {"label":"Eye Appeal","score":65},
+    {"label":"Preservation","score":58}
+  ],
+  "gradeTable":[
+    {"grade":"G-4","price":"$30"},
+    {"grade":"VG-8","price":"$35"},
+    {"grade":"F-12","price":"$42"},
+    {"grade":"VF-20","price":"$52"},
+    {"grade":"EF-40","price":"$68"},
+    {"grade":"AU-50","price":"$88"},
+    {"grade":"AU-58","price":"$125"},
+    {"grade":"MS-60","price":"$165"},
+    {"grade":"MS-63","price":"$290"},
+    {"grade":"MS-65","price":"$680"}
+  ],
+  "currentGrade":"AU-58",
+  "detectedErrors":[
+    {
+      "name":"Die Crack — Obverse Field",
+      "type":"die_error",
+      "detected":true,
+      "severity":"value_add",
+      "location":"Rim at 3 o'clock extending through obverse field",
+      "visualEvidence":"Raised irregular line visible in obverse field",
+      "valueDelta":45,
+      "valueDeltaLabel":"+$45",
+      "desc":"A raised die crack is present on the obverse. Die cracks form when the working die develops a fracture from metal fatigue during production. Collectors call these late die state coins.",
+      "marketNote":"Minor die cracks typically add $25–$80 over base value."
+    },
+    {
+      "name":"Cleaning / Whizzing",
+      "type":"post_mint_damage",
+      "detected":true,
+      "severity":"deduction",
+      "location":"Obverse and reverse fields",
+      "visualEvidence":"Parallel fine lines in fields consistent with improper cleaning",
+      "valueDelta":-60,
+      "valueDeltaLabel":"-$60",
+      "desc":"Fields show evidence of whizzing — moving metal with a wire brush to simulate luster. PCGS and NGC body-bag cleaned coins. Buyer demand is severely reduced.",
+      "marketNote":"Cleaned coins sell for 40–70% below problem-free examples."
+    },
+    {
+      "name":"VAM-4 Doubled Ear",
+      "type":"variety",
+      "detected":false,
+      "severity":"info",
+      "location":"Not visible — Liberty ear area",
+      "visualEvidence":"Not observed on this coin",
+      "valueDelta":0,
+      "valueDeltaLabel":"$0 (not detected)",
+      "desc":"The VAM-4 shows clear doubling on Liberty's ear. Not detected on this specimen.",
+      "marketNote":"If present: +$200–$800 in circulated grades."
+    }
+  ],
+  "errorSummary":{
+    "totalDetected":2,
+    "valueAddCount":1,
+    "deductionCount":1,
+    "grossPremium":45,
+    "grossDeductions":-60,
+    "netImpact":-15,
+    "netImpactLabel":"-$15",
+    "adjustedValue":"$70 – $305",
+    "verdict":"Net negative: cleaning deduction outweighs die crack premium."
+  },
+  "errorIntro":"Morgan Dollars have over 1,000 documented VAM varieties. Always check for die cracks, RPMs, and cleaning.",
+  "authenticity":{
+    "verdict":"Appears Genuine",
+    "confidence":94,
+    "edge":"Reeded edge consistent with genuine issue",
+    "weightMatch":"Appears to match 26.73g specification",
+    "dieAlignment":"Normal coin-turn alignment",
+    "notes":"Design details and lettering consistent with genuine Mint dies. No casting seams detected.",
+    "submissionAdvice":"NGC Details grading is worthwhile if you need certified authenticity for resale despite cleaning."
+  },
+  "melt":{
+    "metal":"Silver",
+    "purity":"90% Silver (0.900 fine)",
+    "metalWeight":"0.7735 troy oz silver",
+    "spotPrice":"$28.40/oz (approx.)",
+    "total":"$21.97"
+  }
+}`
+        }]}]}
+      )
+    });
+    clearInterval(st);
+    if(!res.ok) throw new Error('API '+res.status);
+    const data=await res.json();
+    const raw=data.content.find(b=>b.type==='text')?.text||'';
+    const clean=raw.replace(/`{3}json|`{3}/gi,'').trim();
+    currentResult=JSON.parse(clean);
+    scannedCount++;
+    renderResult(currentResult);
+    ls.classList.remove('show');
+    showResult();
+  }catch(e){
+    clearInterval(st);
+    ls.classList.remove('show');
+    showToast('Analysis failed: '+e.message.slice(0,60));
+  }
+}
+
+// ── Render result ──
+function renderResult(r){
+  // Hero image
+  const hImg=document.getElementById('heroImg');
+  const hEmoji=document.getElementById('heroEmoji');
+  if(uploadedDataUrl){hImg.src=uploadedDataUrl;hImg.classList.add('show');hEmoji.style.display='none';}
+  else{hImg.classList.remove('show');hEmoji.style.display='';}
+
+  // Badge
+  const badge=document.getElementById('heroBadge');
+  badge.textContent=r.badge||'Identified';
+  badge.className='coin-badge '+(
+    r.badge==="Collector's Choice"?'cb-choice':
+    r.badge==='Rare'?'cb-rare':
+    r.badge==='Error Coin'?'cb-error':
+    r.badge==='Key Date'?'cb-key':'cb-common'
+  );
+
+  // Titles
+  document.getElementById('resultName').textContent=r.name||'Unknown Coin';
+  document.getElementById('resultSub').textContent=r.subtitle||'—';
+
+  // Rarity bar
+  const rp=r.rarity?.pct||50;
+  const rc=r.rarity?.color||'#FF9500';
+  document.getElementById('rarityFill').style.width=rp+'%';
+  document.getElementById('rarityFill').style.background=rc;
+  document.getElementById('rarityLabel').textContent=r.rarity?.label||'—';
+  document.getElementById('rarityLabel').style.color=rc;
+
+  // Values
+  document.getElementById('collVal').textContent=r.collectorValue||'—';
+  document.getElementById('meltVal').textContent=r.meltValue||'—';
+
+  // Scan screen quick stats
+  document.getElementById('ssGrade').textContent=r.grade?.label?.split(' ')[0]||'—';
+  document.getElementById('ssRarity').textContent=r.rarity?.label||'—';
+  const qv=(r.collectorValue||'').split('–')[0].trim()||'—';
+  document.getElementById('ssValue').textContent=qv;
+  document.getElementById('vfBadgeVal').textContent=qv;
+  document.getElementById('vfBadge').classList.add('show');
+
+  // Detail rows
+  document.getElementById('detailsGroup').innerHTML=(r.details||[]).map(d=>
+    `<div class="ios-row"><span class="ios-row-key">${esc(d.key)}</span><span class="ios-row-val">${esc(d.val)}</span></div>`
+  ).join('');
+  document.getElementById('coinHistory').textContent=r.history||'—';
+
+  // Grading tab
+  const sh=r.grade?.sheldon||0;
+  document.getElementById('gradeNum').textContent=sh||'—';
+  document.getElementById('gradeLabel').textContent=r.grade?.label||'—';
+  document.getElementById('gradeDescText').textContent=r.grade?.desc||'—';
+  // Arc stroke
+  const arc=document.getElementById('gradeArc');
+  if(arc){const total=201;const offset=total-(sh/70)*total;arc.style.strokeDashoffset=offset;}
+
+  // Surface bars
+  const surfColors=['#5E5CE6','#007AFF','#FF9500','#34C759'];
+  document.getElementById('surfaceGroup').innerHTML=(r.surfaceScores||[]).map((s,i)=>`
+    <div class="surface-bar-row">
+      <div class="sbr-label">${esc(s.label)}</div>
+      <div class="sbr-track"><div class="sbr-fill" style="width:${s.score}%;background:${surfColors[i]}"></div></div>
+      <div class="sbr-val" style="color:${surfColors[i]}">${s.score}</div>
+    </div>`).join('');
+
+  // Grade table
+  const cur=r.currentGrade||'';
+  document.getElementById('gradeTable').innerHTML=
+    `<thead><tr><th>Grade</th><th style="text-align:right">Value</th></tr></thead><tbody>`+
+    (r.gradeTable||[]).map(g=>{
+      const hi=cur&&(g.grade===cur||cur.includes(g.grade.replace('MS-','').replace('AU-','').replace('EF-','').replace('VF-','')));
+      return`<tr class="${hi?'row-current':''}">
+        <td>${esc(g.grade)}${hi?'<span class="gpt-this">THIS COIN</span>':''}</td>
+        <td class="gpt-price" style="text-align:right">${esc(g.price)}</td>
+      </tr>`;
+    }).join('')+'</tbody>';
+
+  // ── Error coins ──
+  const errors=r.detectedErrors||r.errorCoins||[];
+  const summary=r.errorSummary||{};
+  document.getElementById('errorIntroText').textContent=r.errorIntro||'Known error varieties for this coin series.';
+  const detected=errors.filter(e=>e.detected);
+  const adds=detected.filter(e=>(e.valueDelta||0)>0);
+  const deds=detected.filter(e=>(e.valueDelta||0)<0);
+  const netImpact=summary.netImpact??errors.reduce((s,e)=>s+(e.valueDelta||0),0);
+  const isPos=netImpact>=0;
+  const adjVal=summary.adjustedValue||r.collectorValue||'—';
+
+  let errHTML='';
+  if(detected.length>0){
+    const sumColor=isPos?'#34C759':'#FF3B30';
+    const sumBg=isPos?'rgba(52,199,89,0.12)':'rgba(255,59,48,0.12)';
+    errHTML=`<div class="error-summary-card" style="background:${sumBg};border:1px solid ${isPos?'rgba(52,199,89,0.25)':'rgba(255,59,48,0.25)'}">
+      <div class="esc-header">
+        <div class="esc-title" style="color:${sumColor}">${isPos?'⬆':'⬇'} ERROR VALUE IMPACT</div>
+        <div class="esc-grid">
+          <div class="esc-block">
+            <div class="esc-block-num" style="color:#34C759">+$${adds.reduce((s,e)=>s+(e.valueDelta||0),0)}</div>
+            <div class="esc-block-lbl">Premiums</div>
+          </div>
+          <div class="esc-block">
+            <div class="esc-block-num" style="color:#FF3B30">-$${Math.abs(deds.reduce((s,e)=>s+(e.valueDelta||0),0))}</div>
+            <div class="esc-block-lbl">Deductions</div>
+          </div>
+          <div class="esc-block">
+            <div class="esc-block-num" style="color:${sumColor}">${summary.netImpactLabel||(isPos?'+$':'-$')+Math.abs(netImpact)}</div>
+            <div class="esc-block-lbl">Net Impact</div>
+          </div>
+        </div>
+        <div class="esc-adj-row">
+          <div class="esc-adj-lbl">Adjusted Est. Value</div>
+          <div class="esc-adj-val">${esc(adjVal)}</div>
+        </div>
+        ${summary.verdict?`<div class="esc-verdict" style="color:${sumColor}">${esc(summary.verdict)}</div>`:''}
+      </div>
+    </div>`;
+    if(adjVal&&adjVal!==r.collectorValue)document.getElementById('collVal').textContent=adjVal;
+  }
+
+  errHTML+=errors.map(e=>{
+    const isAdd=(e.valueDelta||0)>0;
+    const isDed=(e.valueDelta||0)<0;
+    const dotColor=isAdd?'#34C759':isDed?'#FF3B30':'#8E8E93';
+    const deltaColor=isAdd?'#34C759':isDed?'#FF3B30':'#8E8E93';
+    const deltaBg=isAdd?'rgba(52,199,89,0.08)':isDed?'rgba(255,59,48,0.08)':'var(--bg-group)';
+    return`<div class="error-card">
+      <div class="error-card-header">
+        <div class="error-dot2" style="background:${dotColor}"></div>
+        <div class="error-card-title">${esc(e.name)}</div>
+        <span class="error-detected-badge ${e.detected?'edb-yes':'edb-no'}">${e.detected?'✓ Detected':'Not Found'}</span>
+      </div>
+      <div class="error-card-body">
+        ${e.location?`<div class="error-location"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>${esc(e.location)}</div>`:''}
+        ${e.detected&&e.visualEvidence?`<div class="error-location" style="color:var(--blue)"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>${esc(e.visualEvidence)}</div>`:''}
+        <div class="error-desc-text">${esc(e.desc)}</div>
+        ${e.marketNote?`<div class="error-market-note">${esc(e.marketNote)}</div>`:''}
+        <div class="error-delta-row" style="background:${deltaBg}">
+          <div class="edR-lbl" style="color:${deltaColor}">${isAdd?'Error Premium':isDed?'Value Deduction':'Not Detected'}</div>
+          <div class="edR-val" style="color:${deltaColor}">${esc(e.valueDeltaLabel||'$0')}</div>
+        </div>
+      </div>
+    </div>`;
+  }).join('')||(errors.length===0?'<div style="color:var(--muted);font-size:15px;text-align:center;padding:30px">No errors or varieties detected</div>':'');
+  document.getElementById('errorCardsWrap').innerHTML=errHTML;
+
+  // Auth tab
+  const auth=r.authenticity||{};
+  const isSus=(auth.verdict||'').toLowerCase().includes('suspect')||(auth.verdict||'').toLowerCase().includes('counterfeit');
+  const avc=document.getElementById('authVerdictCard');
+  avc.style.background=isSus?'rgba(255,59,48,0.08)':'rgba(52,199,89,0.08)';
+  avc.style.border=`1px solid ${isSus?'rgba(255,59,48,0.2)':'rgba(52,199,89,0.2)'}`;
+  document.getElementById('authIconWrap').className='auth-icon-wrap '+(isSus?'avc-suspect':'avc-genuine');
+  document.getElementById('authIconWrap').textContent=isSus?'⚠️':'✅';
+  document.getElementById('authVerdictTitle').textContent=auth.verdict||'Appears Genuine';
+  document.getElementById('authVerdictTitle').style.color=isSus?'var(--red)':'var(--green)';
+  document.getElementById('authConfText').textContent=(auth.confidence||'—')+'% confidence';
+  document.getElementById('authPctNum').textContent=(auth.confidence||'—')+'%';
+  document.getElementById('authPctNum').style.color=isSus?'var(--red)':'var(--green)';
+  document.getElementById('authDetailsGroup').innerHTML=[
+    {k:'Edge Details',v:auth.edge||'—'},
+    {k:'Weight Match',v:auth.weightMatch||'—'},
+    {k:'Die Alignment',v:auth.dieAlignment||'—'},
+  ].map(d=>`<div class="ios-row"><span class="ios-row-key">${d.k}</span><span class="ios-row-val">${esc(d.v)}</span></div>`).join('');
+  document.getElementById('authNotesText').textContent=auth.notes||'—';
+  document.getElementById('authSubmissionText').textContent=auth.submissionAdvice||'—';
+
+  // Melt
+  const melt=r.melt||{};
+  document.getElementById('meltMetal').textContent=melt.metal||'—';
+  document.getElementById('meltPurity').textContent=melt.purity||'—';
+  document.getElementById('meltWeight').textContent=melt.metalWeight||'—';
+  document.getElementById('meltSpot').textContent=melt.spotPrice||'—';
+  document.getElementById('meltTotal').textContent=r.meltValue||melt.total||'—';
+
+  // Reset save btn
+  const sb=document.getElementById('saveBtn');
+  sb.textContent='Save'; sb.className='save-btn';
+
+  // Profile stats
+  document.getElementById('psScanned').textContent=scannedCount;
+  document.getElementById('psSaved').textContent=collection.length;
+}
+
+// ── Save coin ──
+function saveCoin(){
+  if(!currentResult)return;
+  if(collection.find(c=>c.name===currentResult.name)){showToast('Already in collection');return;}
+  collection.push({...currentResult,img:uploadedDataUrl,savedAt:new Date()});
+  updateCollection();
+  const sb=document.getElementById('saveBtn');
+  sb.textContent='Saved ✓'; sb.className='save-btn saved';
+  showToast('Added to collection!');
+}
+
+// ── Update collection ──
+function updateCollection(){
+  const list=document.getElementById('collList');
+  const empty=document.getElementById('collEmpty');
+  const badge=document.getElementById('tbBadge');
+  if(!collection.length){empty.style.display='';list.innerHTML='';badge.classList.remove('show');return;}
+  empty.style.display='none';
+  badge.textContent=collection.length; badge.classList.add('show');
+  let total=0;
+  collection.forEach(c=>{
+    const m=((c.collectorValue||'').match(/\$([\d,.]+)/)||[])[1];
+    if(m)total+=parseFloat(m.replace(/,/g,''));
+  });
+  document.getElementById('collTotalVal').textContent='$'+total.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+  document.getElementById('psValue').textContent='$'+Math.round(total);
+  list.innerHTML=`<div class="coll-section-hdr">All Coins (${collection.length})</div>`+
+    collection.map((c,i)=>`
+    <div class="coll-item" onclick="viewCollItem(${i})">
+      <div class="ci-thumb">${c.img?`<img src="${c.img}" alt="">`:'🪙'}</div>
+      <div class="ci-info">
+        <div class="ci-name">${esc(c.name)}</div>
+        <div class="ci-meta">${esc(c.subtitle||'')}</div>
+        <span class="ci-grade-tag">${esc(c.grade?.label?.split(' ')[0]||'—')}</span>
+      </div>
+      <div class="ci-value-col">
+        <div class="ci-val">${esc((c.collectorValue||'—').split('–')[0].trim())}</div>
+        <div class="ci-val-lbl">Est. Value</div>
+      </div>
+    </div>`).join('');
+  updateGeoMap();
+}
+
+function viewCollItem(i){
+  currentResult=collection[i];
+  uploadedDataUrl=collection[i].img||null;
+  renderResult(currentResult);
+  showResult();
+  document.getElementById('saveBtn').textContent='Saved ✓';
+  document.getElementById('saveBtn').className='save-btn saved';
+}
+
+// ── Geo Map ──
+const countryCoords={
+  'united states':[80,55],'usa':[80,55],'canada':[75,38],'mexico':[72,72],
+  'united kingdom':[160,35],'uk':[160,35],'great britain':[160,35],
+  'france':[163,40],'germany':[168,37],'spain':[158,44],'italy':[170,46],
+  'russia':[210,30],'china':[250,50],'japan':[272,48],
+  'australia':[268,118],'new zealand':[285,128],'india':[228,65],
+  'brazil':[90,110],'south africa':[175,115],'egypt':[178,65],
+  'ancient rome':[170,46],'rome':[170,46],'greece':[175,48],
+};
+function updateGeoMap(){
+  const dotsG=document.getElementById('mapDots');
+  const tagsEl=document.getElementById('geoTags');
+  if(!dotsG||!tagsEl)return;
+  const seen=new Map();
+  collection.forEach(c=>{
+    const sub=(c.subtitle||'').toLowerCase();
+    const det=(c.details||[]).find(d=>d.key==='Country');
+    const country=(det?.val||'').toLowerCase();
+    for(const [key,coords] of Object.entries(countryCoords)){
+      if(country.includes(key)||sub.includes(key)){
+        if(!seen.has(key))seen.set(key,{coords,count:0,label:det?.val||key});
+        seen.get(key).count++; break;
+      }
+    }
+  });
+  dotsG.innerHTML='';
+  seen.forEach(({coords,count})=>{
+    const r=Math.min(3+count*2,9);
+    dotsG.innerHTML+=`
+      <circle cx="${coords[0]}" cy="${coords[1]}" r="${r+4}" fill="rgba(94,92,230,0.15)"/>
+      <circle cx="${coords[0]}" cy="${coords[1]}" r="${r}" fill="#5E5CE6" opacity="0.9">
+        <animate attributeName="r" values="${r};${r+2};${r}" dur="2.5s" repeatCount="indefinite"/>
+      </circle>`;
+  });
+  tagsEl.innerHTML=[...seen.entries()].map(([,v])=>
+    `<span class="geo-tag">${esc(v.label)} (${v.count})</span>`
+  ).join('');
+}
+
+// ── Export CSV ──
+function exportCSV(){
+  if(!collection.length){showToast('No coins to export yet');return;}
+  const hdr=['Name','Subtitle','Grade','Sheldon','Collector Value','Melt Value','Rarity','Badge','Saved'];
+  const rows=collection.map(c=>[
+    `"${(c.name||'').replace(/"/g,'""')}"`,
+    `"${(c.subtitle||'').replace(/"/g,'""')}"`,
+    `"${(c.grade?.label||'').replace(/"/g,'""')}"`,
+    c.grade?.sheldon||'',
+    `"${(c.collectorValue||'').replace(/"/g,'""')}"`,
+    `"${(c.meltValue||'').replace(/"/g,'""')}"`,
+    `"${(c.rarity?.label||'').replace(/"/g,'""')}"`,
+    `"${(c.badge||'').replace(/"/g,'""')}"`,
+    `"${c.savedAt?new Date(c.savedAt).toLocaleDateString():''}"`,
+  ]);
+  const csv=[hdr.join(','),...rows.map(r=>r.join(','))].join('\n');
+  const blob=new Blob([csv],{type:'text/csv'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;a.download='coinsnap-collection.csv';a.click();
+  URL.revokeObjectURL(url);
+  showToast('Exported as CSV!');
+}
+
+// ── Export report ──
+function exportReport(){
+  if(!currentResult)return;
+  const r=currentResult;
+  const errors=r.detectedErrors||r.errorCoins||[];
+  const summary=r.errorSummary||{};
+  const lines=[
+    'COINSNAP AI — COIN IDENTIFICATION REPORT',
+    '='.repeat(48),
+    `Coin: ${r.name}`,
+    `Info: ${r.subtitle}`,
+    '',
+    `GRADE: ${r.grade?.label} (${r.grade?.sheldon}/70)`,
+    r.grade?.desc,
+    '',
+    `COLLECTOR VALUE: ${r.collectorValue}`,
+    `MELT VALUE:      ${r.meltValue}`,
+    `RARITY:          ${r.rarity?.label} (${r.rarity?.pct}%)`,
+    '',
+    'COIN DETAILS:',
+    ...(r.details||[]).map(d=>`  ${d.key}: ${d.val}`),
+    '',
+    'SURFACE ANALYSIS:',
+    ...(r.surfaceScores||[]).map(s=>`  ${s.label}: ${s.score}/100`),
+    '',
+    'GRADE VALUE TABLE:',
+    ...(r.gradeTable||[]).map(g=>`  ${g.grade}: ${g.price}${r.currentGrade===g.grade?'  ← THIS COIN':''}`),
+    '',
+    'ERROR SCAN RESULTS:',
+    ...errors.map(e=>`  [${e.detected?'✓ DETECTED':'Not found'}] ${e.name} — ${e.valueDeltaLabel||''}\n    ${e.desc}`),
+    '',
+    'ERROR VALUE SUMMARY:',
+    `  Premiums:    +$${summary.grossPremium||0}`,
+    `  Deductions:  -$${Math.abs(summary.grossDeductions||0)}`,
+    `  Net Impact:  ${summary.netImpactLabel||'$0'}`,
+    `  Adj. Value:  ${summary.adjustedValue||r.collectorValue||'—'}`,
+    summary.verdict?`  Verdict: ${summary.verdict}`:'',
+    '',
+    'AUTHENTICITY:',
+    `  Verdict: ${r.authenticity?.verdict}  (${r.authenticity?.confidence}% confidence)`,
+    `  ${r.authenticity?.notes}`,
+    '',
+    'MELT VALUE:',
+    `  Metal: ${r.melt?.metal}  Purity: ${r.melt?.purity}`,
+    `  Metal Weight: ${r.melt?.metalWeight}`,
+    `  Spot: ${r.melt?.spotPrice}  Total: ${r.melt?.total}`,
+    '',
+    `Generated: ${new Date().toLocaleString()}`,
+    'CoinSnap AI · Powered by Claude Vision',
+  ].filter(l=>l!==undefined).join('\n');
+  const blob=new Blob([lines],{type:'text/plain'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;a.download=`coinsnap-${(r.name||'coin').replace(/\s+/g,'-').toLowerCase()}.txt`;a.click();
+  URL.revokeObjectURL(url);
+  showToast('Report downloaded!');
+}
+
+// ── Toast ──
+function showToast(msg,dur=2400){
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),dur);
+}
+
+// ── Helpers ──
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+</script>
+</body>
+</html>
